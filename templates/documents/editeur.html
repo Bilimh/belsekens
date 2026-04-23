@@ -1,0 +1,77 @@
+<!-- templates/documents/editeur.html -->
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="editor-container">
+    <div class="editor-toolbar">
+        <button id="add-situation-btn" class="btn-modern">
+            <i class="fas fa-lightbulb"></i>
+        </button>
+        
+        <button id="add-problematic-btn" class="btn-modern">
+            <i class="fas fa-bullseye"></i>
+        </button>
+        
+        <button id="add-text-btn" class="btn-modern">
+            <i class="fas fa-align-left"></i>
+        </button>
+        
+        <button id="add-image-btn" class="btn-modern">
+            <i class="fas fa-image"></i>
+        </button>
+        
+        <button id="add-question-btn" class="btn-modern">
+            <i class="fas fa-question"></i>
+        </button>
+        
+        <button id="add-spaceanswer-btn" class="btn-modern">
+            <i class="fas fa-pen"></i>
+        </button>
+        
+        <button id="save-document-btn" class="btn-modern btn-outline">
+            <i class="fas fa-save"></i>
+        </button>
+        
+        <button id="add-table-btn" class="btn-modern">
+            <i class="fas fa-table"></i>
+        </button>
+        
+        <button id="add-graph-btn" class="btn-modern">
+            <i class="fas fa-chart-line"></i>
+        </button>
+        
+        <button id="add-qcm-btn" class="btn-modern" title="Ajouter un QCM">
+            <i class="fas fa-list-check"></i>
+        </button>
+        
+        <button onclick="window.print()" class="btn-modern btn-outline">
+            <i class="fas fa-print"></i>
+        </button>
+        
+        <!-- ⚠️ NOUVEAU : Bouton retour -->
+        <a href="{% if document.dossier %}{% url 'dossier' document.dossier.id %}{% else %}{% url 'dashboard' %}{% endif %}" class="btn-modern btn-outline">
+            <i class="fas fa-arrow-left"></i> Retour
+        </a>
+    </div>
+    
+    <div class="workspace-wrapper">
+        <div id="editor-workspace"></div>
+    </div>
+</div>
+
+<!-- Données initiales -->
+{{ document.content_json|json_script:"initial-document-data" }}
+<script>
+    window.BELSEKENS_DOCUMENT_ID = {{ document.id }};
+</script>
+
+<!-- Font Awesome 6 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<!-- Google Fonts Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="{% static 'css/editor.css' %}">
+<script type="module" src="{% static 'js/editor/main.js' %}"></script>
+{% endblock %}

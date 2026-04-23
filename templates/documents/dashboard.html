@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="dashboard">
+    <h1>Mes dossiers</h1>
+    <a href="{% url 'creer_dossier' %}" class="btn">+ Nouveau dossier</a>
+    
+    <div class="dossiers-grid">
+        {% for dossier in dossiers %}
+        <a href="{% url 'dossier_detail' dossier.slug %}" class="dossier-card">
+            📁 {{ dossier.nom }}
+        </a>
+        {% empty %}
+        <p>Aucun dossier. Créez votre premier dossier !</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

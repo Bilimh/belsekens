@@ -1,0 +1,506 @@
+/* dossier.css - Version moderne 2026 */
+
+/* ===== BASE ===== */
+.dossier-view {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 32px;
+    min-height: calc(100vh - 70px);
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+/* ===== HEADER ===== */
+.dossier-header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+    background: white;
+    padding: 20px 28px;
+    border-radius: 28px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #64748b;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 40px;
+    transition: all 0.2s;
+}
+
+.back-link:hover {
+    background: #f1f5f9;
+    color: #3b82f6;
+}
+
+.dossier-header h1 {
+    flex: 1;
+    font-size: 28px;
+    font-weight: 700;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dossier-header h1 i {
+    color: #3b82f6;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* ===== BOUTONS ICÔNES HEADER ===== */
+.btn-icon-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #f1f5f9;
+    border-radius: 12px;
+    color: #475569;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.btn-icon-action:hover {
+    background: #e2e8f0;
+    color: #3b82f6;
+    transform: translateY(-2px);
+}
+
+.btn-icon-action.btn-icon-danger:hover {
+    background: #fef2f2;
+    color: #ef4444;
+}
+
+.btn-icon-action.btn-primary-icon {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+}
+
+.btn-icon-action.btn-primary-icon:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    transform: translateY(-2px);
+    color: white;
+}
+
+/* Tooltip */
+.btn-icon-action::after {
+    content: attr(title);
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.btn-icon-action:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ===== SOUS-DOSSIERS ===== */
+.sous-dossiers-section {
+    margin-bottom: 48px;
+}
+
+.sous-dossiers-section h2,
+.fichiers-section h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.sous-dossiers-section h2 i,
+.fichiers-section h2 i {
+    color: #3b82f6;
+    font-size: 18px;
+}
+
+.sous-dossiers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.dossier-card-wrapper {
+    position: relative;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 20px;
+    border: 1px solid rgba(203, 213, 225, 0.5);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.dossier-card-wrapper:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -12px rgba(0,0,0,0.15);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.dossier-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    text-decoration: none;
+}
+
+.dossier-card i {
+    font-size: 32px;
+    color: #f59e0b;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    padding: 10px;
+    border-radius: 14px;
+}
+
+.dossier-card span {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.card-actions {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.dossier-card-wrapper:hover .card-actions {
+    opacity: 1;
+}
+
+/* ===== FICHIERS ===== */
+.fichiers-section {
+    margin-top: 16px;
+}
+
+.fichiers-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.fichier-card {
+    background: white;
+    border-radius: 20px;
+    padding: 20px 24px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(203, 213, 225, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+}
+
+.fichier-card::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+    transform: scaleY(0);
+    transition: transform 0.2s ease;
+}
+
+.fichier-card:hover::after {
+    transform: scaleY(1);
+}
+
+.fichier-card:hover {
+    transform: translateX(8px);
+    box-shadow: 0 12px 24px -12px rgba(0,0,0,0.15);
+    border-color: rgba(59,130,246,0.2);
+}
+
+.fichier-link {
+    flex: 1;
+    text-decoration: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.fichier-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.fichier-info i {
+    font-size: 24px;
+    color: #3b82f6;
+    background: #eff6ff;
+    padding: 10px;
+    border-radius: 14px;
+}
+
+.fichier-info span {
+    font-size: 17px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.fichier-date {
+    font-size: 13px;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    padding: 6px 14px;
+    border-radius: 40px;
+}
+
+.fichier-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.fichier-card:hover .fichier-actions {
+    opacity: 1;
+}
+
+/* ===== BOUTONS ICÔNES GÉNÉRIQUES ===== */
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    color: #64748b;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background: #e2e8f0;
+    color: #3b82f6;
+}
+
+.btn-icon-danger:hover {
+    background: #fef2f2;
+    color: #ef4444;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    background: white;
+    border-radius: 32px;
+    border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.empty-state i {
+    font-size: 80px;
+    margin-bottom: 24px;
+    background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.empty-state p {
+    margin-bottom: 24px;
+    font-size: 18px;
+    color: #64748b;
+}
+
+.empty-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 24px;
+    flex-wrap: wrap;
+}
+
+.empty-actions .btn-primary,
+.empty-actions .btn-secondary {
+    padding: 12px 24px;
+}
+
+/* ===== BOUTONS SECONDAIRES ===== */
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #f1f5f9;
+    color: #475569;
+    text-decoration: none;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+}
+
+.btn-secondary:hover {
+    background: #e2e8f0;
+    color: #3b82f6;
+    transform: translateY(-2px);
+}
+
+/* ===== ALERT ===== */
+.alert-danger {
+    background: #fef2f2;
+    border-left: 4px solid #ef4444;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.alert-danger i {
+    color: #ef4444;
+    font-size: 20px;
+}
+
+.alert-danger p {
+    margin: 0;
+    color: #991b1b;
+    font-size: 14px;
+}
+
+.alert-danger p:first-of-type {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+/* ===== ANIMATION ===== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dossier-card, .fichier-card {
+    animation: fadeInUp 0.4s ease backwards;
+}
+
+.dossier-card:nth-child(1) { animation-delay: 0.05s; }
+.dossier-card:nth-child(2) { animation-delay: 0.1s; }
+.dossier-card:nth-child(3) { animation-delay: 0.15s; }
+.dossier-card:nth-child(4) { animation-delay: 0.2s; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .dossier-view {
+        padding: 24px 16px;
+    }
+    
+    .dossier-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .sous-dossiers-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .fichier-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .fichier-link {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .fichier-date {
+        align-self: flex-start;
+    }
+    
+    .fichier-actions {
+        justify-content: flex-end;
+        margin-top: 12px;
+        opacity: 1;
+    }
+    
+    .card-actions {
+        opacity: 1;
+        top: 8px;
+        right: 8px;
+    }
+    
+    .header-actions {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+    
+    .btn-icon-action::after {
+        display: none;
+    }
+    
+    .btn-icon-action {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .empty-actions {
+        flex-direction: column;
+    }
+    
+    .empty-actions .btn-primary,
+    .empty-actions .btn-secondary {
+        width: 100%;
+        justify-content: center;
+    }
+}

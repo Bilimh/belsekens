@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ fichier.titre }}</title>
+    
+    <!-- Bibliothèques -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Dans le head de export_pdf.html, ajouter -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    
+    <style>
+        /* Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: white;
+            padding: 0;
+        }
+        
+        /* Page */
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 20mm;
+            background: white;
+            position: relative;
+            page-break-after: always;
+        }
+        
+        .page:last-child {
+            page-break-after: auto;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .page-number {
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        /* Conteneur des blocs */
+        .page-content {
+            position: relative;
+            width: 100%;
+            min-height: 500px;
+        }
+        
+        /* Bloc générique */
+        .block {
+            position: relative;
+            background: white;
+            border: 2px solid #3b82f6;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+        
+        /* Situation */
+        .situation-block {
+            border-color: #53195D;
+        }
+        
+        .situation-activite_header_title {
+            font-size: 1.5rem;
+            line-height: 1.75rem;
+            color: #53195D;
+            font-weight: bold;
+            margin-bottom: 7.5px;
+            padding: 0 5px;
+        }
+        
+        .situation-text {
+            line-height: 1.6;
+            padding: 10px;
+        }
+        
+        .situation-image-wrapper {
+            float: right;
+            width: 270px;
+            margin: 0 0 10px 15px;
+        }
+        
+        .situation-image-wrapper img {
+            width: 100%;
+            border-radius: 6px;
+        }
+        
+        .situation-image-caption {
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+            margin-top: 5px;
+        }
+        
+        /* Problématique */
+        .problematic-block {
+            border-color: #53195D;
+            background-color: #E0C4F4;
+        }
+        
+        .problematique-content {
+            font-style: italic;
+            font-size: 16px;
+            line-height: 1.4;
+            padding: 15px;
+            position: relative;
+        }
+        
+        /* Question */
+        .question-block {
+            margin-bottom: 20px;
+        }
+        
+        .question-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .question-number {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .question-text {
+            flex: 1;
+            font-size: 16px;
+            line-height: 1.4;
+            padding: 5px;
+        }
+        
+        /* Texte */
+        .text-block {
+            border-color: #6f42c1;
+        }
+        
+        .text-content {
+            font-size: 16px;
+            line-height: 1.6;
+            padding: 5px;
+        }
+        
+        /* Tableau */
+        .table-block-table {
+            border-collapse: collapse;
+            width: 100%;
+            border: 1px solid black;
+        }
+        
+        .table-block-table td {
+            border: 1px solid black;
+            padding: 8px;
+        }
+        
+        /* QCM */
+        .qcm-block {
+            border-color: #0d6efd;
+        }
+        
+        .qcm-question-preview {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .qcm-choices-preview.column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .qcm-choice-preview {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .qcm-choice-marker {
+            width: 24px;
+            height: 24px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #0d6efd;
+        }
+        
+        .qcm-choice-text {
+            flex: 1;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        
+        /* Graphique */
+        .graph-block canvas {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            margin: 10px 0;
+        }
+        
+        /* Espace réponse */
+        .answer-line {
+            min-height: 40px;
+            border-bottom: 2px dotted #666;
+            padding: 8px 5px;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        /* KaTeX */
+        .katex {
+            font-size: 1.1em;
+        }
+        
+        .katex-display {
+            margin: 1em 0;
+            overflow-x: auto;
+        }
+        
+        /* Clearfix */
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
+        
+        /* Masquer les éléments interactifs */
+        .delete-btn, .resize-handle, .drag-handle, .block-controls,
+        .table-block-controls, .space-answer-controls, .qcm-editor,
+        .text-editor, .btn-icon, .card-actions, .header-actions,
+        .editor-toolbar, .add-page-container, .btn-delete-page {
+            display: none !important;
+        }
+        /* Graphique - styles spécifiques pour l'export PDF */
+.graph-block {
+    border-color: #fd7e14 !important;
+}
+
+.graph-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.graph-title-preview {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.graph-canvas-wrapper {
+    width: 100%;
+    min-height: 300px;
+    position: relative;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.graph-canvas-wrapper canvas {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 280px;
+}
+
+/* Forcer la hauteur pour Chart.js */
+canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+    </style>
+</head>
+<body>
+    {% for page in pages %}
+    <div class="page">
+        <div class="page-header">
+            <span class="page-number">Page {{ page.pageNumber }}</span>
+        </div>
+        <div class="page-content">
+            {% for block in page.blocks %}
+                {% if block.type == 'situation' %}
+                    <div class="block situation-block">
+                        {% if block.content.imageUrl %}
+                        <div class="situation-image-wrapper">
+                            <img src="{{ block.content.imageUrl }}" alt="{{ block.content.imageCaption|default:'Image' }}">
+                            {% if block.content.imageCaption %}
+                            <div class="situation-image-caption">{{ block.content.imageCaption }}</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        <div class="situation-activite_header_title">{{ block.content.title|default:"Situation" }}</div>
+                        <div class="situation-text">{{ block.content.content|safe|default:block.content|safe }}</div>
+                        <div class="clearfix"></div>
+                    </div>
+                    
+                {% elif block.type == 'problematic' %}
+                    <div class="block problematic-block">
+                        <div class="problematique-content">{{ block.content|safe }}</div>
+                    </div>
+                    
+                {% elif block.type == 'question' %}
+                    <div class="block question-block">
+                        <div class="question-header">
+                            <div class="question-number">{{ block.questionNumber|default:block.content.questionNumber|default:1 }}</div>
+                            <div class="question-text">{{ block.content.text|default:block.content|safe }}</div>
+                        </div>
+                    </div>
+                    
+                {% elif block.type == 'text' %}
+                    <div class="block text-block">
+                        <div class="text-content">{{ block.content|safe }}</div>
+                    </div>
+                    
+                {% elif block.type == 'table' %}
+                    <div class="block table-block">
+                        <table class="table-block-table">
+                            <tbody>
+                                {% for row in block.content %}
+                                <tr>
+                                    {% for cell in row %}
+                                    <td>{{ cell|safe }}</td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                {% elif block.type == 'qcm' %}
+                    <div class="block qcm-block">
+                        <div class="qcm-question-preview">{{ block.content.question|safe }}</div>
+                        <div class="qcm-choices-preview column">
+                            {% for choice in block.content.choices %}
+                            <div class="qcm-choice-preview">
+                                <div class="qcm-choice-marker">
+                                    {% with letter=forloop.counter0|add:65 %}
+                                        {{ letter|stringformat:"c" }}
+                                    {% endwith %}
+                                </div>
+                                <div class="qcm-choice-text">{{ choice|safe }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% elif block.type == 'graph' %}
+                    <div class="block graph-block">
+                        <div class="graph-header">
+                            <div class="graph-title-preview">{{ block.content.chartTitle|default:"Graphique" }}</div>
+                        </div>
+                        <div class="graph-canvas-wrapper">
+                            <canvas id="chart-{{ forloop.counter }}" style="width:100%; height:300px;"></canvas>
+                        </div>
+                    </div>
+                  
+                    
+                {% elif block.type == 'spaceAnswer' %}
+                    <div class="block space-answer-block">
+                        {% for line in block.content.lines|default:block.content %}
+                        <div class="answer-line">{{ line|safe }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                {% else %}
+                    <div class="block">
+                        <div class="block-content">{{ block.content|safe }}</div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    
+    <script>
+        // Rendre le LaTeX
+        document.querySelectorAll('.block, .qcm-question-preview, .qcm-choice-text, .situation-text, .problematique-content, .question-text, .text-content').forEach(el => {
+            renderMathInElement(el, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError: false
+            });
+        });
+ 
+
+    </script>
+
+<script>
+    (function() {
+        console.log('=== DÉBUT CHARGEMENT GRAPHIQUES ===');
+        
+        // Récupérer tous les blocs graphiques
+        const graphBlocks = document.querySelectorAll('.graph-block');
+        console.log('Nombre de blocs graphiques trouvés:', graphBlocks.length);
+        
+        graphBlocks.forEach((block, index) => {
+            console.log(`--- Bloc graphique ${index + 1} ---`);
+            
+            // Chercher le canvas
+            const canvas = block.querySelector('canvas');
+            if (!canvas) {
+                console.log('❌ Canvas non trouvé');
+                return;
+            }
+            console.log('✅ Canvas trouvé');
+            
+            // Chercher le script avec les données
+            const scripts = block.querySelectorAll('script');
+            console.log('Scripts trouvés:', scripts.length);
+            
+            // Essayer de récupérer les données depuis un script inline
+            let chartData = null;
+            scripts.forEach(script => {
+                const content = script.textContent;
+                if (content.includes('chartData =')) {
+                    try {
+                        // Extraire l'objet chartData
+                        const match = content.match(/chartData\s*=\s*({[\s\S]*?});/);
+                        if (match) {
+                            chartData = JSON.parse(match[1]);
+                            console.log('✅ Données trouvées:', chartData);
+                        }
+                    } catch(e) {
+                        console.error('Erreur parsing:', e);
+                    }
+                }
+            });
+            
+            if (!chartData) {
+                console.log('❌ Aucune donnée trouvée');
+                return;
+            }
+            
+            // Créer le graphique
+            try {
+                const mode = chartData.mode || 'data';
+                const chartType = chartData.chartType || 'line';
+                const chartTitle = chartData.chartTitle || '';
+                
+                if (mode === 'data') {
+                    const labels = chartData.labels || ['A', 'B', 'C', 'D'];
+                    const datasets = (chartData.datasets || []).map((ds, i) => {
+                        const colors = [
+                            { bg: 'rgba(59,130,246,0.45)', border: 'rgba(59,130,246,1)' },
+                            { bg: 'rgba(16,185,129,0.45)', border: 'rgba(16,185,129,1)' },
+                            { bg: 'rgba(245,158,11,0.45)', border: 'rgba(245,158,11,1)' }
+                        ];
+                        return {
+                            label: ds.label || `Série ${i + 1}`,
+                            data: ds.values || [10, 20, 30, 40],
+                            backgroundColor: colors[i % colors.length].bg,
+                            borderColor: colors[i % colors.length].border,
+                            borderWidth: 2,
+                            tension: 0.25,
+                            pointRadius: chartType === 'line' ? 3 : 0
+                        };
+                    });
+                    
+                    new Chart(canvas, {
+                        type: chartType,
+                        data: { labels: labels, datasets: datasets },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                title: { display: !!chartTitle, text: chartTitle },
+                                legend: { position: 'top' }
+                            }
+                        }
+                    });
+                    console.log('✅ Graphique créé avec succès');
+                }
+            } catch(e) {
+                console.error('❌ Erreur création graphique:', e);
+            }
+        });
+        
+        console.log('=== FIN CHARGEMENT GRAPHIQUES ===');
+    })();
+</script>
+</body>
+</html>

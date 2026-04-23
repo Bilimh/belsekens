@@ -1,0 +1,420 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    /* ========== HERO SECTION ========== */
+    .hero {
+        min-height: calc(100vh - 70px);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 60px;
+        padding: 40px 0;
+        flex-wrap: wrap;
+    }
+    
+    .hero-content {
+        flex: 1;
+        min-width: 300px;
+    }
+    
+    .hero-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #e0e7ff 0%, #dbeafe 100%);
+        color: #3b82f6;
+        padding: 6px 14px;
+        border-radius: 40px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 24px;
+    }
+    
+    .hero-title {
+        font-size: 52px;
+        font-weight: 800;
+        line-height: 1.2;
+        margin-bottom: 24px;
+        background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    
+    .hero-description {
+        font-size: 18px;
+        line-height: 1.6;
+        color: #475569;
+        margin-bottom: 32px;
+    }
+    
+    .hero-buttons {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    
+    .hero-image {
+        flex: 1;
+        min-width: 300px;
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        border-radius: 32px;
+        padding: 40px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-image i {
+        font-size: 120px;
+        color: white;
+        opacity: 0.9;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .hero-image::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: rotate 20s linear infinite;
+    }
+    
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    /* ========== FEATURES SECTION ========== */
+    .features {
+        padding: 80px 0;
+        background: white;
+        border-radius: 48px 48px 0 0;
+    }
+    
+    .section-title {
+        text-align: center;
+        font-size: 36px;
+        font-weight: 700;
+        margin-bottom: 16px;
+        color: #1e293b;
+    }
+    
+    .section-subtitle {
+        text-align: center;
+        font-size: 18px;
+        color: #64748b;
+        margin-bottom: 48px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 32px;
+    }
+    
+    .feature-card {
+        background: #f8fafc;
+        padding: 32px;
+        border-radius: 24px;
+        transition: all 0.3s;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-4px);
+        border-color: #3b82f6;
+        box-shadow: 0 12px 24px -12px rgba(59,130,246,0.2);
+    }
+    
+    .feature-icon {
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 24px;
+    }
+    
+    .feature-icon i {
+        font-size: 28px;
+        color: white;
+    }
+    
+    .feature-card h3 {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: #1e293b;
+    }
+    
+    .feature-card p {
+        color: #64748b;
+        line-height: 1.5;
+    }
+    
+    /* ========== DISCIPLINES SECTION ========== */
+    .disciplines {
+        padding: 80px 0;
+        background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+    }
+    
+    .disciplines-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 20px;
+    }
+    
+    .discipline-card {
+        background: white;
+        padding: 24px;
+        border-radius: 20px;
+        text-align: center;
+        transition: all 0.3s;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .discipline-card:hover {
+        transform: translateY(-2px);
+        border-color: #3b82f6;
+    }
+    
+    .discipline-card i {
+        font-size: 40px;
+        margin-bottom: 12px;
+        display: block;
+    }
+    
+    .discipline-card span {
+        font-size: 15px;
+        font-weight: 500;
+        color: #1e293b;
+    }
+    
+    /* ========== CTA SECTION ========== */
+    .cta {
+        padding: 80px 0;
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: 48px;
+        margin: 40px 0;
+        text-align: center;
+    }
+    
+    .cta h2 {
+        font-size: 32px;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 16px;
+    }
+    
+    .cta p {
+        color: #94a3b8;
+        margin-bottom: 32px;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .cta .btn-primary {
+        background: white;
+        color: #1e293b;
+        box-shadow: none;
+    }
+    
+    .cta .btn-primary:hover {
+        background: #f8fafc;
+        transform: translateY(-2px);
+    }
+    
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 36px;
+        }
+        .section-title {
+            font-size: 28px;
+        }
+        .hero {
+            flex-direction: column;
+            text-align: center;
+        }
+        .hero-buttons {
+            justify-content: center;
+        }
+        .features-grid {
+            grid-template-columns: 1fr;
+        }
+        .disciplines-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- HERO SECTION -->
+<section class="container">
+    <div class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <i class="fas fa-magic"></i> Création de cours simplifiée
+            </div>
+            <h1 class="hero-title">
+                Créez des cours interactifs<br>en toute simplicité
+            </h1>
+            <p class="hero-description">
+                Belsekens est l'outil moderne pour les enseignants. Créez, organisez et partagez vos cours 
+                avec une interface intuitive. Mathématiques, Physique, Histoire, Informatique... 
+                Toutes les matières sont supportées.
+            </p>
+            <div class="hero-buttons">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard' %}" class="btn-primary">
+                        <i class="fas fa-folder-open"></i> Accéder à mes cours
+                    </a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn-primary">
+                        <i class="fas fa-rocket"></i> Commencer gratuitement
+                    </a>
+                    <a href="#features" class="btn-primary" style="background: transparent; border: 2px solid #3b82f6; color: #3b82f6; box-shadow: none;">
+                        <i class="fas fa-play"></i> Découvrir
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="hero-image">
+            <i class="fas fa-chalkboard-teacher"></i>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES SECTION -->
+<section class="features" id="features">
+    <div class="container">
+        <h2 class="section-title">Pourquoi choisir Belsekens ?</h2>
+        <p class="section-subtitle">
+            Une plateforme pensée par des enseignants, pour des enseignants
+        </p>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-arrows-up-down-left-right"></i>
+                </div>
+                <h3>Drag & Drop intuitif</h3>
+                <p>Créez votre cours en glissant-déposant des blocs : texte, image, question, QCM, tableau, graphique...</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-superscript"></i>
+                </div>
+                <h3>Formules mathématiques</h3>
+                <p>Intégrez facilement du LaTeX pour des formules mathématiques parfaites. Idéal pour les sciences.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <h3>Responsive & moderne</h3>
+                <p>Interface adaptée à tous les écrans. Vos cours sont accessibles sur ordinateur, tablette ou smartphone.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-save"></i>
+                </div>
+                <h3>Sauvegarde automatique</h3>
+                <p>Ne perdez plus jamais votre travail. Sauvegarde automatique à chaque modification.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-print"></i>
+                </div>
+                <h3>Export PDF</h3>
+                <p>Exportez vos cours au format PDF pour les imprimer ou les partager avec vos élèves.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h3>IA générative (bientôt)</h3>
+                <p>Générez automatiquement des cours et activités conformes aux programmes officiels.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- DISCIPLINES SECTION -->
+<section class="disciplines">
+    <div class="container">
+        <h2 class="section-title">Pour toutes les matières</h2>
+        <p class="section-subtitle">
+            Belsekens s'adapte à votre discipline
+        </p>
+        
+        <div class="disciplines-grid">
+            <div class="discipline-card">
+                <i class="fas fa-calculator"></i>
+                <span>Mathématiques</span>
+            </div>
+            <div class="discipline-card">
+                <i class="fas fa-flask"></i>
+                <span>Physique-Chimie</span>
+            </div>
+            <div class="discipline-card">
+                <i class="fas fa-code"></i>
+                <span>Informatique</span>
+            </div>
+            <div class="discipline-card">
+                <i class="fas fa-book"></i>
+                <span>Français</span>
+            </div>
+            <div class="discipline-card">
+                <i class="fas fa-globe"></i>
+                <span>Histoire-Géo</span>
+            </div>
+            <div class="discipline-card">
+                <i class="fas fa-language"></i>
+                <span>Langues</span>
+            </div>
+            <div class="discipline-card">
+                <i class="fas fa-dna"></i>
+                <span>SVT</span>
+            </div>
+            <div class="discipline-card">
+                <i class="fas fa-chart-line"></i>
+                <span>Économie</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA SECTION -->
+<section class="container">
+    <div class="cta">
+        <h2>Prêt à transformer vos cours ?</h2>
+        <p>Rejoignez des centaines d'enseignants qui utilisent déjà Belsekens</p>
+        {% if user.is_authenticated %}
+            <a href="{% url 'dashboard' %}" class="btn-primary">
+                <i class="fas fa-folder-open"></i> Accéder à mes cours
+            </a>
+        {% else %}
+            <a href="{% url 'login' %}" class="btn-primary">
+                <i class="fas fa-user-plus"></i> Créer mon compte gratuitement
+            </a>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

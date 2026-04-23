@@ -1,0 +1,97 @@
+<!-- templates/documents/dashboard_editor.html -->
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/vscode.css' %}">
+
+<div class="vscode-container">
+    <!-- Barre d'outils supérieure -->
+    <div class="toolbar">
+        <button id="add-situation-btn" class="btn-modern" title="Situation">
+            <i class="fas fa-lightbulb"></i>
+        </button>
+        <button id="add-problematic-btn" class="btn-modern" title="Problématique">
+            <i class="fas fa-bullseye"></i>
+        </button>
+        <button id="add-text-btn" class="btn-modern" title="Texte">
+            <i class="fas fa-align-left"></i>
+        </button>
+        <button id="add-image-btn" class="btn-modern" title="Image">
+            <i class="fas fa-image"></i>
+        </button>
+        <button id="add-question-btn" class="btn-modern" title="Question">
+            <i class="fas fa-question"></i>
+        </button>
+        <button id="add-spaceanswer-btn" class="btn-modern" title="Espace réponse">
+            <i class="fas fa-pen"></i>
+        </button>
+        <button id="add-table-btn" class="btn-modern" title="Tableau">
+            <i class="fas fa-table"></i>
+        </button>
+        <button id="add-graph-btn" class="btn-modern" title="Graphique">
+            <i class="fas fa-chart-line"></i>
+        </button>
+        <button id="add-qcm-btn" class="btn-modern" title="QCM">
+            <i class="fas fa-list-check"></i>
+        </button>
+        
+        <div class="toolbar-spacer"></div>
+        
+        <button id="save-document-btn" class="btn-modern btn-outline">
+            <i class="fas fa-save"></i> Sauvegarder
+        </button>
+        <button onclick="window.print()" class="btn-modern btn-outline">
+            <i class="fas fa-print"></i>
+        </button>
+    </div>
+    
+    <!-- Conteneur principal (VS Code style) -->
+    <div class="main-layout">
+        <!-- Sidebar gauche (explorateur) -->
+        <div class="sidebar-explorer">
+            <div class="explorer-header">
+                <h3>📁 EXPLORATEUR</h3>
+                <div>
+                    <button id="btn-new-dossier" class="explorer-btn" title="Nouveau dossier">
+                        <i class="fas fa-folder-plus"></i>
+                    </button>
+                    <button id="btn-new-fichier" class="explorer-btn" title="Nouveau fichier">
+                        <i class="fas fa-file-plus"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="explorer-tree" id="explorer-tree">
+                <!-- Arborescence chargée dynamiquement -->
+                <div class="loading">Chargement...</div>
+            </div>
+        </div>
+        
+        <!-- Zone de droite (éditeur) -->
+        <div class="editor-area">
+            <div class="editor-tabs" id="editor-tabs">
+                <!-- Onglets des fichiers ouverts -->
+            </div>
+            
+            <div class="editor-content" id="editor-workspace">
+                <!-- Zone A4 avec les blocs -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Données initiales -->
+<script>
+    window.BELSEKENS_CURRENT_DOCUMENT_ID = null;
+    window.BELSEKENS_USER_ID = {{ request.user.id }};
+</script>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="{% static 'css/editor.css' %}">
+<script type="module" src="{% static 'js/editor/vscode.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,118 @@
+<!-- templates/editor/dossier.html -->
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dossier.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dossier-view">
+    <div class="dossier-header">
+        <a href="
+            {% if dossier.parent %}
+                {% url 'dossier_detail' path=dossier.parent.get_full_path %}
+            {% else %}
+                {% url 'dashboard' %}
+            {% endif %}
+        " class="back-link">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        
+        <h1><i class="fas fa-folder"></i> {{ dossier.nom }}</h1>
+        
+        <div class="header-actions">
+            <!-- Renommer le dossier -->
+            <a href="{% url 'renommer_dossier' path=dossier.get_full_path %}" class="btn-icon-action" title="Renommer le dossier">
+                <i class="fas fa-edit"></i>
+            </a>
+            
+            <!-- Supprimer le dossier -->
+            <a href="{% url 'supprimer_dossier' path=dossier.get_full_path %}" class="btn-icon-action btn-icon-danger" title="Supprimer le dossier">
+                <i class="fas fa-trash-alt"></i>
+            </a>
+            
+            <!-- Sous-dossier -->
+            <a href="{% url 'creer_dossier' %}?parent_id={{ dossier.id }}" class="btn-icon-action" title="Créer un sous-dossier">
+                <i class="fas fa-folder-plus"></i>
+            </a>
+            
+            <!-- Nouveau fichier -->
+            <a href="{% url 'creer_fichier' chemin_dossier=dossier.get_full_path %}" class="btn-icon-action btn-primary-icon" title="Créer un fichier">
+                <i class="fas fa-plus"></i>
+            </a>
+        </div>
+    </div>
+    
+    <!-- SECTION SOUS-DOSSIERS -->
+    {% if sous_dossiers %}
+    <div class="sous-dossiers-section">
+        <h2><i class="fas fa-folder-open"></i> Sous-dossiers</h2>
+        <div class="sous-dossiers-grid">
+            {% for sd in sous_dossiers %}
+            <div class="dossier-card-wrapper">
+                <a href="{% url 'dossier_detail' path=sd.get_full_path %}" class="dossier-card">
+                    <i class="fas fa-folder"></i>
+                    <span>{{ sd.nom }}</span>
+                </a>
+                <div class="card-actions">
+                    <a href="{% url 'renommer_dossier' path=sd.get_full_path %}" class="btn-icon" title="Renommer">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="{% url 'supprimer_dossier' path=sd.get_full_path %}" class="btn-icon btn-icon-danger" title="Supprimer">
+                        <i class="fas fa-trash-alt"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- SECTION FICHIERS -->
+    <div class="fichiers-section">
+        <h2><i class="fas fa-file-alt"></i> Fichiers</h2>
+        <div class="fichiers-grid">
+            {% for fichier in fichiers %}
+            <div class="fichier-card">
+                <a href="{% url 'editeur' chemin_dossier=dossier.get_full_path fichier_slug=fichier.slug %}" class="fichier-link">
+                    <div class="fichier-info">
+                        <i class="fas fa-file-alt"></i>
+                        <span>{{ fichier.titre }}</span>
+                    </div>
+                    <div class="fichier-date">
+                        <i class="fas fa-calendar-alt"></i> {{ fichier.date_modification|date:"d/m/Y" }}
+                    </div>
+                </a>
+                <div class="fichier-actions">
+                    <a href="{% url 'renommer_fichier' chemin_dossier=dossier.get_full_path fichier_slug=fichier.slug %}" class="btn-icon" title="Renommer">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="{% url 'supprimer_fichier' chemin_dossier=dossier.get_full_path fichier_slug=fichier.slug %}" class="btn-icon btn-icon-danger" title="Supprimer">
+                        <i class="fas fa-trash-alt"></i>
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <i class="fas fa-file-alt"></i>
+                <p>Aucun fichier dans ce dossier</p>
+                <a href="{% url 'creer_fichier' chemin_dossier=dossier.get_full_path %}" class="btn-primary">Créer mon premier fichier</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    {% if not sous_dossiers and not fichiers %}
+    <div class="empty-state">
+        <i class="fas fa-folder-open"></i>
+        <p>Ce dossier est vide</p>
+        <div class="empty-actions">
+            <a href="{% url 'creer_dossier' %}?parent_id={{ dossier.id }}" class="btn-secondary">Créer un sous-dossier</a>
+            <a href="{% url 'creer_fichier' chemin_dossier=dossier.get_full_path %}" class="btn-primary">Créer un fichier</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

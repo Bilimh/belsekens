@@ -1,0 +1,171 @@
+// documentRenderer.js
+
+import { setBlocks } from "./editorState.js";
+import { renderBlock } from "./blockRegistry.js";
+import { makeDraggable } from "./drag.js";
+import { makeDeletable } from "./delete.js";
+import { makeResizable } from "./resize.js";
+import { setupBlockSelection } from "./selection.js";
+
+export function renderDocument(documentData, container) {
+  const pages = documentData.pages || [];
+  const blocks = documentData.blocks || [];
+  
+  if (pages.length > 0) {
+    renderMultiPage(pages);
+  } 
+  else if (blocks.length > 0) {
+    let workspace = container;
+    if (!workspace || workspace.id === 'pages-container') {
+      workspace = document.querySelector('.page-content');
+    }
+    if (workspace) {
+      renderSinglePage(blocks, workspace);
+    }
+  }
+}
+
+function renderMultiPage(pages) {
+  const container = document.getElementById('pages-container');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  pages.forEach((page, idx) => {
+    const pageNumber = page.pageNumber || (idx + 1);
+    const pageBlocks = page.blocks || [];
+    
+    // Créer la page
+    const pageId = Date.now() + '-' + pageNumber;
+    const pageDiv = document.createElement('div');
+    pageDiv.className = 'page-item';
+    pageDiv.id = `page-${pageId}`;
+    pageDiv.dataset.pageNumber = pageNumber;
+    pageDiv.innerHTML = `
+      <div class="page-header">
+        <span class="page-number">Page ${pageNumber}</span>
+        <button class="btn-delete-page" data-page="${pageNumber}">
+          <i class="fas fa-trash-alt"></i> Supprimer
+        </button>
+      </div>
+      <div class="page-content" id="page-content-${pageId}" style="position: relative; min-height: 500px;"></div>
+    `;
+    
+    container.appendChild(pageDiv);
+    const pageContent = pageDiv.querySelector('.page-content');
+    if (!pageContent) return;
+    
+    // Ajouter les blocs
+    pageBlocks.forEach(blockData => {
+      // ✅ Normalisation complète des données
+      let renderData = { ...blockData };
+      
+      // Extraire le contenu et le numéro de question si présent
+      if (blockData.content && typeof blockData.content === 'object') {
+        if (blockData.content.text) {
+          renderData.content = blockData.content.text;
+        }
+        if (blockData.content.questionNumber) {
+          renderData.questionNumber = blockData.content.questionNumber;
+        }
+        if (blockData.content.content) {
+          renderData.content = blockData.content.content;
+        }
+      }
+      
+      // Si questionNumber est dans blockData directement
+      if (blockData.questionNumber) {
+        renderData.questionNumber = blockData.questionNumber;
+      }
+      
+      const blockEl = renderBlock(renderData);
+      if (!blockEl) return;
+      
+      // Appliquer position et taille
+      if (blockData.position) {
+        blockEl.style.left = `${blockData.position.left}px`;
+        blockEl.style.top = `${blockData.position.top}px`;
+      }
+      if (blockData.size) {
+        blockEl.style.width = `${blockData.size.width}px`;
+        blockEl.style.minHeight = `${blockData.size.height}px`;
+      }
+      
+      pageContent.appendChild(blockEl);
+      setupBlockSelection(blockEl, pageContent);
+      makeDraggable(blockEl, pageContent);
+      makeDeletable(blockEl);
+      makeResizable(blockEl);
+    });
+  });
+  
+  // Ajouter le bouton "Ajouter une page"
+  const addBtnContainer = document.createElement('div');
+  addBtnContainer.className = 'add-page-container';
+  addBtnContainer.innerHTML = `
+    <button class="btn-add-page" id="add-new-page-btn">
+      <i class="fas fa-plus"></i> Ajouter une page
+    </button>
+  `;
+  container.appendChild(addBtnContainer);
+  
+  const addBtn = document.getElementById('add-new-page-btn');
+  if (addBtn && typeof window.addPage === 'function') {
+    addBtn.addEventListener('click', window.addPage);
+  }
+  
+  // Attacher événements suppression
+  document.querySelectorAll('.btn-delete-page').forEach(btn => {
+    btn.removeEventListener('click', handleDelete);
+    btn.addEventListener('click', handleDelete);
+  });
+}
+
+function renderSinglePage(blocks, workspace) {
+  if (!workspace) return;
+  
+  workspace.innerHTML = "";
+  setBlocks(blocks);
+  
+  blocks.forEach((blockData) => {
+    let renderData = { ...blockData };
+    
+    if (blockData.content && typeof blockData.content === 'object') {
+      if (blockData.content.text) renderData.content = blockData.content.text;
+      else if (blockData.content.content) renderData.content = blockData.content.content;
+      if (blockData.content.questionNumber) {
+        renderData.questionNumber = blockData.content.questionNumber;
+      }
+    }
+    
+    if (blockData.questionNumber) {
+      renderData.questionNumber = blockData.questionNumber;
+    }
+    
+    const blockEl = renderBlock(renderData);
+    if (!blockEl) return;
+    
+    if (blockData.position) {
+      blockEl.style.left = `${blockData.position.left}px`;
+      blockEl.style.top = `${blockData.position.top}px`;
+    }
+    if (blockData.size) {
+      blockEl.style.width = `${blockData.size.width}px`;
+      blockEl.style.minHeight = `${blockData.size.height}px`;
+    }
+    
+    workspace.appendChild(blockEl);
+    setupBlockSelection(blockEl, workspace);
+    makeDraggable(blockEl, workspace);
+    makeDeletable(blockEl);
+    makeResizable(blockEl);
+  });
+}
+
+function handleDelete(e) {
+  e.stopPropagation();
+  const pageNumber = parseInt(e.currentTarget.getAttribute('data-page'));
+  if (typeof window.deletePage === 'function') {
+    window.deletePage(pageNumber, e.currentTarget);
+  }
+}

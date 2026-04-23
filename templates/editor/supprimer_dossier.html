@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/form.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1><i class="fas fa-trash-alt"></i> Supprimer le dossier</h1>
+    <p class="subtitle">Dossier : <strong>{{ dossier.nom }}</strong></p>
+    
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p>Attention ! Cette action est irréversible.</p>
+        <p>Tous les sous-dossiers et fichiers seront également supprimés.</p>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <input type="text" name="confirm_nom" placeholder="Tapez '{{ dossier.nom }}' pour confirmer" required autofocus>
+        <button type="submit" class="btn-danger" style="width:100%">Confirmer la suppression</button>
+        <div class="form-actions">
+            <a href="{% url 'dossier_detail' dossier.slug %}" class="btn-primary btn-outline" style="width:100%">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

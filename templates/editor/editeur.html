@@ -1,0 +1,442 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    /* ========== ÉDITEUR AVEC PAGES VERTICALES ========== */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        background: #e2e8f0;
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .editor-container {
+        display: flex;
+        min-height: 100vh;
+    }
+    
+    /* Toolbar verticale */
+    .editor-toolbar {
+        position: fixed;
+        top: 50%;
+        left: 20px;
+        transform: translateY(-50%);
+        background: white;
+        border-radius: 16px;
+        padding: 12px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        z-index: 100;
+    }
+    
+    .btn-modern {
+        background: transparent;
+        border: none;
+        border-radius: 12px;
+        padding: 10px;
+        cursor: pointer;
+        width: 40px;
+        height: 40px;
+        color: #475569;
+        font-size: 18px;
+        position: relative;
+    }
+    
+    .btn-modern:hover {
+        background: #f1f5f9;
+        color: #3b82f6;
+    }
+    
+    .btn-modern::after {
+        content: attr(title);
+        position: absolute;
+        left: 100%;
+        margin-left: 12px;
+        background: #1e293b;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: 0.2s;
+    }
+    
+    .btn-modern:hover::after {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .toolbar-divider {
+        width: 100%;
+        height: 1px;
+        background: #e2e8f0;
+        margin: 8px 0;
+    }
+    
+    /* Workspace */
+    .workspace-wrapper {
+        flex: 1;
+        margin-left: 80px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: #e2e8f0;
+    }
+    
+    /* Conteneur des pages */
+    #pages-container {
+        width: 21cm;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+    
+    /* Style d'une page */
+    .page-item {
+        width: 100%;
+        min-height: 29.7cm;
+        background: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    /* Zone de contenu de la page (pour les blocs) */
+    .page-content {
+        position: relative;
+        width: 100%;
+        min-height: calc(29.7cm - 60px);
+        background: white;
+        padding: 40px 50px;
+    }
+    
+    /* En-tête de page */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .page-number {
+        font-size: 13px;
+        font-weight: 600;
+        color: #3b82f6;
+        background: #eff6ff;
+        padding: 4px 12px;
+        border-radius: 20px;
+    }
+    
+    .btn-delete-page {
+        background: transparent;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        color: #ef4444;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: 0.2s;
+    }
+    
+    .btn-delete-page:hover {
+        background: #fef2f2;
+    }
+    
+    /* Blocs */
+    .block {
+        position: absolute;
+        background: white;
+        border: 2px solid #3b82f6;
+        border-radius: 8px;
+        padding: 10px;
+        cursor: move;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        min-width: 200px;
+    }
+    
+    .block:hover {
+        border-color: #2563eb;
+        box-shadow: 0 4px 12px rgba(59,130,246,0.2);
+    }
+    
+    /* Bouton ajouter page */
+    .add-page-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 10px;
+    }
+    
+    .btn-add-page {
+        background: white;
+        border: 2px dashed #cbd5e1;
+        border-radius: 40px;
+        padding: 12px 28px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        color: #64748b;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: 0.2s;
+    }
+    
+    .btn-add-page:hover {
+        border-color: #3b82f6;
+        color: #3b82f6;
+        background: #eff6ff;
+    }
+    
+    @media (max-width: 768px) {
+        .workspace-wrapper {
+            margin-left: 0;
+            padding: 80px 10px 20px;
+        }
+        #pages-container {
+            width: 100%;
+        }
+        .page-content {
+            padding: 20px;
+        }
+    }
+    
+    .toast-notification {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: #1e293b;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 40px;
+        font-size: 13px;
+        z-index: 200;
+        transform: translateX(400px);
+        transition: 0.3s;
+    }
+    
+    .toast-notification.show {
+        transform: translateX(0);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="editor-container">
+    <!-- Toolbar -->
+    <div class="editor-toolbar">
+        <button id="add-situation-btn" class="btn-modern" title="Situation"><i class="fas fa-lightbulb"></i></button>
+        <button id="add-problematic-btn" class="btn-modern" title="Problématique"><i class="fas fa-bullseye"></i></button>
+        <button id="add-text-btn" class="btn-modern" title="Texte"><i class="fas fa-align-left"></i></button>
+        <button id="add-image-btn" class="btn-modern" title="Image"><i class="fas fa-image"></i></button>
+        <div class="toolbar-divider"></div>
+        <button id="add-question-btn" class="btn-modern" title="Question"><i class="fas fa-question"></i></button>
+        <button id="add-spaceanswer-btn" class="btn-modern" title="Espace réponse"><i class="fas fa-pen"></i></button>
+        <button id="add-qcm-btn" class="btn-modern" title="QCM"><i class="fas fa-list-check"></i></button>
+        <div class="toolbar-divider"></div>
+        <button id="add-table-btn" class="btn-modern" title="Tableau"><i class="fas fa-table"></i></button>
+        <button id="add-graph-btn" class="btn-modern" title="Graphique"><i class="fas fa-chart-line"></i></button>
+        <div class="toolbar-divider"></div>
+        <button id="save-document-btn" class="btn-modern" title="Sauvegarder"><i class="fas fa-save"></i></button>
+        <button onclick="window.print()" class="btn-modern" title="Imprimer"><i class="fas fa-print"></i></button>
+    </div>
+
+    <!-- Workspace -->
+    <div class="workspace-wrapper">
+        <div id="pages-container"></div>
+    </div>
+</div>
+
+<!-- Données -->
+{{ fichier.contenu|json_script:"initial-document-data" }}
+<script>
+    window.BELSEKENS_DOCUMENT_ID = {{ fichier.id }};
+    window.BELSEKENS_DOSSIER_SLUG = "{{ dossier.slug }}";
+    window.BELSEKENS_FICHIER_SLUG = "{{ fichier.slug }}";
+</script>
+
+<div id="toast-notification" class="toast-notification">Sauvegardé</div>
+
+<script>
+    // ========== GESTION DES PAGES ==========
+    let pageCounter = 1;
+    let currentPageId = null;
+    
+    // Créer une nouvelle page
+    function createPageElement(pageNumber) {
+        const pageId = Date.now() + '-' + pageNumber;
+        const pageDiv = document.createElement('div');
+        pageDiv.className = 'page-item';
+        pageDiv.id = `page-${pageId}`;
+        pageDiv.dataset.pageNumber = pageNumber;
+        pageDiv.innerHTML = `
+            <div class="page-header">
+                <span class="page-number">Page ${pageNumber}</span>
+                <button class="btn-delete-page" data-page="${pageNumber}">
+                    <i class="fas fa-trash-alt"></i> Supprimer
+                </button>
+            </div>
+            <div class="page-content" id="page-content-${pageId}">
+                <!-- Les blocs seront ajoutés ici -->
+            </div>
+        `;
+        return pageDiv;
+    }
+    
+    // Ajouter une nouvelle page
+    function addPage() {
+        const container = document.getElementById('pages-container');
+        
+        // Enlever le bouton ajouter s'il existe
+        const existingBtn = container.querySelector('.add-page-container');
+        if (existingBtn) existingBtn.remove();
+        
+        const newPage = createPageElement(pageCounter);
+        container.appendChild(newPage);
+        
+        // Ajouter le bouton "Ajouter une page" à la fin
+        const addBtnContainer = document.createElement('div');
+        addBtnContainer.className = 'add-page-container';
+        addBtnContainer.innerHTML = `
+            <button class="btn-add-page" id="add-new-page-btn">
+                <i class="fas fa-plus"></i> Ajouter une page
+            </button>
+        `;
+        container.appendChild(addBtnContainer);
+        
+        pageCounter++;
+        updatePageNumbers();
+        
+        // Réattacher les événements
+        document.getElementById('add-new-page-btn')?.addEventListener('click', addPage);
+        attachDeleteEvents();
+        
+        showToast(`Page ${pageCounter - 1} ajoutée`);
+        newPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    
+    // Supprimer une page
+    function deletePage(pageNumber, btn) {
+        const pages = document.querySelectorAll('#pages-container .page-item');
+        if (pages.length <= 1) {
+            showToast('Vous ne pouvez pas supprimer la dernière page', 'error');
+            return;
+        }
+        
+        const pageToDelete = Array.from(pages).find(p => p.dataset.pageNumber == pageNumber);
+        if (pageToDelete) {
+            pageToDelete.remove();
+            updatePageNumbers();
+            showToast(`Page ${pageNumber} supprimée`);
+        }
+    }
+    
+    // Mettre à jour les numéros de page
+    function updatePageNumbers() {
+        const pages = document.querySelectorAll('#pages-container .page-item');
+        pages.forEach((page, index) => {
+            const newNumber = index + 1;
+            page.dataset.pageNumber = newNumber;
+            const numberSpan = page.querySelector('.page-number');
+            if (numberSpan) numberSpan.textContent = `Page ${newNumber}`;
+            const deleteBtn = page.querySelector('.btn-delete-page');
+            if (deleteBtn) deleteBtn.setAttribute('data-page', newNumber);
+        });
+        pageCounter = pages.length + 1;
+    }
+    
+    // Attacher les événements de suppression
+    function attachDeleteEvents() {
+        document.querySelectorAll('.btn-delete-page').forEach(btn => {
+            btn.removeEventListener('click', handleDelete);
+            btn.addEventListener('click', handleDelete);
+        });
+    }
+    
+    function handleDelete(e) {
+        const pageNumber = parseInt(e.currentTarget.getAttribute('data-page'));
+        deletePage(pageNumber, e.currentTarget);
+    }
+    
+    // Obtenir la page courante (celle qui a le focus ou la dernière)
+    function getCurrentPageContent() {
+        const pages = document.querySelectorAll('#pages-container .page-item');
+        if (pages.length === 0) return null;
+        
+        // Chercher la page qui contient l'élément actif
+        for (let page of pages) {
+            if (page.contains(document.activeElement)) {
+                return page.querySelector('.page-content');
+            }
+        }
+        // Sinon retourner la dernière page
+        const lastPage = pages[pages.length - 1];
+        return lastPage ? lastPage.querySelector('.page-content') : null;
+    }
+    
+    // Initialiser avec une première page
+    function init() {
+        const container = document.getElementById('pages-container');
+        container.innerHTML = '';
+        
+        // Première page par défaut
+        const firstPage = createPageElement(1);
+        container.appendChild(firstPage);
+        pageCounter = 2;
+        
+        // Ajouter le bouton "Ajouter une page"
+        const addBtnContainer = document.createElement('div');
+        addBtnContainer.className = 'add-page-container';
+        addBtnContainer.innerHTML = `
+            <button class="btn-add-page" id="add-new-page-btn">
+                <i class="fas fa-plus"></i> Ajouter une page
+            </button>
+        `;
+        container.appendChild(addBtnContainer);
+        
+        // Écouter le bouton
+        document.getElementById('add-new-page-btn')?.addEventListener('click', addPage);
+        
+        // Écouter les suppressions
+        attachDeleteEvents();
+        
+        console.log('✅ Pages initialisées');
+    }
+    
+    // Exposer les fonctions pour main.js
+    window.getCurrentPageContent = getCurrentPageContent;
+    window.addPage = addPage;
+    
+    // Initialiser
+    init();
+    
+    function showToast(msg, type = 'success') {
+        const toast = document.getElementById('toast-notification');
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+    
+    window.showToast = showToast;
+</script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/editor.css' %}">
+<script type="module" src="{% static 'js/editor/main.js' %}"></script>
+{% endblock %}

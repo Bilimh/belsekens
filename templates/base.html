@@ -1,0 +1,219 @@
+<!-- templates/base.html -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Belsekens - {% block title %}Éditeur pédagogique{% endblock %}</title>
+    
+    <!-- Styles de base -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Style global -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        @media print {
+            .navbar{
+                display: none !important;
+            }
+        }
+
+        
+    </style>
+    
+    <!-- Styles spécifiques à la page -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{% url 'home' %}" class="nav-brand">
+                <i class="fas fa-graduation-cap"></i> Belsekens
+            </a>
+            <div class="nav-menu">
+                {% if user.is_authenticated %}
+                    <span class="nav-user"><i class="fas fa-user"></i> {{ user.username }}</span>
+                    <a href="{% url 'dashboard' %}" class="nav-link"><i class="fas fa-folder"></i> Mes dossiers</a>
+                    <a href="{% url 'logout' %}" class="nav-link"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="nav-link"><i class="fas fa-sign-in-alt"></i> Connexion</a>
+                    <a href="{% url 'signup' %}" class="nav-link btn-primary-small">Inscription</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+    
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <style>
+        .navbar {
+            background: white;
+            border-bottom: 1px solid rgba(203, 213, 225, 0.5);
+            padding: 0 32px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.95);
+        }
+        
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+        }
+        
+        .nav-brand {
+            font-size: 20px;
+            font-weight: 700;
+            text-decoration: none;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+        
+        .nav-link {
+            text-decoration: none;
+            color: #475569;
+            font-weight: 500;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .nav-link:hover {
+            color: #3b82f6;
+        }
+        
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #1e293b;
+            font-weight: 500;
+            background: #f1f5f9;
+            padding: 6px 14px;
+            border-radius: 40px;
+        }
+        
+        .btn-primary-small {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 40px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0 16px;
+            }
+            .nav-menu {
+                gap: 12px;
+            }
+            .nav-user span {
+                display: none;
+            }
+        }
+        /* Gestion des sauts de page pour l'impression */
+@media print {
+    /* Éviter de couper les blocs */
+    .block {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    
+    /* Éviter de couper les tableaux */
+    .table-block-table {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    
+    /* Éviter de couper les graphiques */
+    .graph-canvas-wrapper {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    
+    /* Éviter de couper les images */
+    .situation-image-wrapper img {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    
+    /* Forcer un saut de page avant chaque nouvelle page */
+    .page {
+        page-break-after: always;
+        break-after: page;
+    }
+    
+    .page:last-child {
+        page-break-after: auto;
+        break-after: auto;
+    }
+    
+    /* Éviter les veuves et orphelines */
+    p, h1, h2, h3, .block-title {
+        widows: 3;
+        orphans: 3;
+    }
+}
+
+/* Règles générales pour éviter les coupures */
+.block {
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+/* Pour les longs tableaux, permettre la coupure mais avec une répétition d'en-tête */
+.table-block-table {
+    break-inside: auto;
+    page-break-inside: auto;
+}
+
+.table-block-table thead {
+    display: table-header-group;
+}
+
+.table-block-table tfoot {
+    display: table-footer-group;
+}
+    </style>
+</body>
+</html>

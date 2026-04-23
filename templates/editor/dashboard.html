@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1><i class="fas fa-folder"></i> Mes dossiers</h1>
+        <a href="{% url 'creer_dossier' %}" class="btn-primary">
+            <i class="fas fa-plus"></i> Nouveau dossier
+        </a>
+    </div>
+    
+    <div class="dossiers-grid">
+        {% for dossier in dossiers %}
+        <a href="{% url 'dossier_detail' dossier.slug %}" class="dossier-card">
+            <i class="fas fa-folder"></i>
+            <span>{{ dossier.nom }}</span>
+        </a>
+        {% empty %}
+        <div class="empty-state">
+            <i class="fas fa-folder-open"></i>
+            <p>Aucun dossier pour le moment</p>
+            <a href="{% url 'creer_dossier' %}" class="btn-primary">Créer mon premier dossier</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

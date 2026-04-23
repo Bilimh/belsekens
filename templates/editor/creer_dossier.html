@@ -1,0 +1,41 @@
+<!-- templates/editor/creer_dossier.html -->
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/form.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1><i class="fas fa-folder-plus"></i> Nouveau dossier</h1>
+    <p class="subtitle">
+        Créez un dossier pour organiser vos cours
+        {% if parent_dossier %}
+        dans <strong>{{ parent_dossier.nom }}</strong>
+        {% endif %}
+    </p>
+    
+    <form method="post">
+        {% csrf_token %}
+        <input type="text" name="nom" placeholder="Nom du dossier (ex: Suites numériques)" required autofocus>
+        
+        <!-- Champ caché pour le dossier parent -->
+        {% if parent_dossier %}
+        <input type="hidden" name="parent_id" value="{{ parent_dossier.id }}">
+        {% endif %}
+        
+        <button type="submit" class="btn-primary" style="width:100%">Créer le dossier</button>
+        <div class="form-actions">
+            <a href="
+                {% if parent_path %}
+                    {% url 'dossier_detail' path=parent_path %}
+                {% else %}
+                    {% url 'dashboard' %}
+                {% endif %}
+            " class="btn-primary btn-outline" style="width:100%">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
