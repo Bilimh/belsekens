@@ -51,7 +51,15 @@ function renderMultiPage(pages) {
       <div class="page-content" id="page-content-${pageId}" style="position: relative; min-height: 500px;"></div>
     `;
     
+    //Clic sur l'onglet → page active + bordure verte
+    pageDiv.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-delete-page')) return;
+        if (typeof window.setActivePage === 'function') {
+            window.setActivePage(pageNumber);
+        }
+    });
     container.appendChild(pageDiv);
+    
     const pageContent = pageDiv.querySelector('.page-content');
     if (!pageContent) return;
     
@@ -144,6 +152,12 @@ function renderMultiPage(pages) {
     btn.removeEventListener('click', handleDelete);
     btn.addEventListener('click', handleDelete);
   });
+  if (typeof window.updatePageTabs === 'function') {
+    setTimeout(() => {
+        window.updatePageTabs();
+        console.log('✅ Onglets mis à jour depuis renderMultiPage');
+    }, 50);
+}
 }
 
 function renderSinglePage(blocks, workspace) {
