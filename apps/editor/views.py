@@ -344,3 +344,164 @@ def export_pdf(request, chemin_dossier, fichier_slug):
     response = HttpResponse(pdf_bytes, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{fichier.titre}.pdf"'
     return response
+
+
+
+# apps/editor/views.py - AJOUTER CES FONCTIONS
+
+import os
+import uuid
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from django.conf import settings
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def upload_image(request):
+    """Upload une image pour un bloc"""
+    try:
+        image = request.FILES.get('image')
+        block_id = request.POST.get('block_id')
+        
+        if not image:
+            return JsonResponse({'success': False, 'error': 'Aucune image fournie'})
+        
+        # Vérifier le type de fichier
+        allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+        if image.content_type not in allowed_types:
+            return JsonResponse({'success': False, 'error': 'Type de fichier non autorisé'})
+        
+        # Vérifier la taille (max 5MB)
+        if image.size > 5 * 1024 * 1024:
+            return JsonResponse({'success': False, 'error': 'Image trop volumineuse (max 5MB)'})
+        
+        # Générer un nom de fichier unique
+        ext = os.path.splitext(image.name)[1]
+        filename = f"editor_images/{uuid.uuid4().hex}{ext}"
+        
+        # Sauvegarder l'image
+        saved_path = default_storage.save(filename, ContentFile(image.read()))
+        image_url = default_storage.url(saved_path)
+        
+        return JsonResponse({
+            'success': True,
+            'image_url': image_url,
+            'filename': filename
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def delete_image(request):
+    """Supprime une image"""
+    try:
+        import json
+        data = json.loads(request.body)
+        image_url = data.get('image_url')
+        
+        if not image_url:
+            return JsonResponse({'success': False, 'error': 'Aucune image spécifiée'})
+        
+        # Extraire le chemin relatif
+        relative_path = image_url.replace(settings.MEDIA_URL, '')
+        
+        # Supprimer le fichier
+        if default_storage.exists(relative_path):
+            default_storage.delete(relative_path)
+        
+        return JsonResponse({'success': True})
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+    
+
+
+# apps/editor/views.py - AJOUTER CETTE FONCTION
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def upload_video(request):
+    """Upload une vidéo pour un bloc"""
+    try:
+        video = request.FILES.get('video')
+        block_id = request.POST.get('block_id')
+        
+        if not video:
+            return JsonResponse({'success': False, 'error': 'Aucune vidéo fournie'})
+        
+        # Vérifier le type de fichier
+        allowed_types = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime']
+        if video.content_type not in allowed_types:
+            return JsonResponse({'success': False, 'error': 'Type de fichier non autorisé (MP4, WebM, OGG)'})
+        
+        # Vérifier la taille (max 100MB)
+        if video.size > 100 * 1024 * 1024:
+            return JsonResponse({'success': False, 'error': 'Vidéo trop volumineuse (max 100MB)'})
+        
+        # Générer un nom de fichier unique
+        
+        ext = os.path.splitext(video.name)[1]
+        filename = f"editor_videos/{uuid.uuid4().hex}{ext}"
+        
+        # Sauvegarder la vidéo
+        from django.core.files.storage import default_storage
+        from django.core.files.base import ContentFile
+        saved_path = default_storage.save(filename, ContentFile(video.read()))
+        video_url = default_storage.url(saved_path)
+        
+        return JsonResponse({
+            'success': True,
+            'video_url': video_url,
+            'filename': filename
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+    
+
+
+# apps/editor/views.py - Ajouter
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def upload_audio(request):
+    """Upload un fichier audio pour un bloc"""
+    try:
+        audio = request.FILES.get('audio')
+        block_id = request.POST.get('block_id')
+        
+        if not audio:
+            return JsonResponse({'success': False, 'error': 'Aucun fichier audio fourni'})
+        
+        # Vérifier le type de fichier
+        allowed_types = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a']
+        if audio.content_type not in allowed_types:
+            return JsonResponse({'success': False, 'error': 'Type de fichier non autorisé (MP3, WAV, OGG, M4A)'})
+        
+        # Vérifier la taille (max 50MB)
+        if audio.size > 50 * 1024 * 1024:
+            return JsonResponse({'success': False, 'error': 'Fichier audio trop volumineux (max 50MB)'})
+        
+        import os
+        import uuid
+        ext = os.path.splitext(audio.name)[1]
+        filename = f"editor_audios/{uuid.uuid4().hex}{ext}"
+        
+        from django.core.files.storage import default_storage
+        from django.core.files.base import ContentFile
+        saved_path = default_storage.save(filename, ContentFile(audio.read()))
+        audio_url = default_storage.url(saved_path)
+        
+        return JsonResponse({
+            'success': True,
+            'audio_url': audio_url,
+            'filename': filename
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

@@ -9,7 +9,7 @@ const textConfig = {
   defaultContent: "Ajouter du texte ou du LaTeX...",
 
   defaultWidth: 600,
-  defaultHeight: 40,
+  defaultHeight: 20,
   defaultLeft: 40,
   defaultTop: 40,
 
@@ -32,14 +32,12 @@ const textConfig = {
   },
 
   customCSS: `
-    /* Conteneur principal */
     .text-container {
       width: 100%;
       background: transparent;
       cursor: pointer;
     }
 
-    /* ===== PREVIEW ===== */
     .text-preview {
       background: #fff;
       border-radius: 12px;
@@ -51,6 +49,7 @@ const textConfig = {
       color: #1e293b;
       white-space: pre-wrap;
       word-break: break-word;
+      min-height: 120px;
     }
 
     .text-preview:hover {
@@ -58,17 +57,12 @@ const textConfig = {
       background: #fcfaff;
     }
 
-    /* ===== EDITOR ===== */
     .text-editor {
       display: none;
       background: #fff;
       border-radius: 12px;
       padding: 16px 20px;
       border: 2px solid #6f42c1;
-    }
-
-    .text-container.is-editing {
-      cursor: text;
     }
 
     .text-container.is-editing .text-preview {
@@ -79,7 +73,6 @@ const textConfig = {
       display: block;
     }
 
-    /* Source éditable - hauteur automatique */
     .text-source {
       background: #fff;
       border: 1px solid #cbd5e1;
@@ -91,9 +84,9 @@ const textConfig = {
       outline: none;
       cursor: text;
       min-height: 120px;
-      transition: all 0.2s;
       white-space: pre-wrap;
       word-break: break-word;
+      font-family: monospace;
     }
 
     .text-source:focus {
@@ -107,27 +100,17 @@ const textConfig = {
       font-style: italic;
     }
 
-    /* ===== KATEX - EXACTEMENT COMME QCM.JS ===== */
-    .text-preview {
-      font-size: 16px;
-    }
+/* Forcer la taille du LaTeX dans le preview */
+.text-preview.latex-enabled .katex,
+.text-preview .katex {
+  font-size: 1.1em !important;
+}
 
-    .text-preview .katex,
-    .text-preview .katex *,
-    .text-preview .katex .katex-html,
-    .text-preview .katex .katex-math {
-      font-size: 16px !important;
-    }
-
-    .latex-enabled .katex {
-      font-size: 1em !important;
-    }
-
-    .latex-enabled .katex-display {
-      margin: 0.5em 0;
-      overflow-x: auto;
-      overflow-y: hidden;
-    }
+.text-preview.latex-enabled .katex-display,
+.text-preview .katex-display {
+  font-size: 1.2em !important;
+  margin: 1em 0;
+}
   `,
 
   customEvents: (blockEl, blockData) => {
@@ -145,15 +128,15 @@ const textConfig = {
     }
 
     function saveText() {
-      const content = normalizeContent(sourceEl.innerHTML);
-      blockData.content = content;
-      updateBlockContent(blockData.id, { content });
+      // ✅ Récupérer le code BRUT depuis l'éditeur
+      const rawContent = sourceEl.innerHTML;
+      
+      // Stocker le code brut
+      blockData.content = rawContent;
+      updateBlockContent(blockData.id, { content: rawContent });
 
-      if (window.triggerAutoSave) {
-        window.triggerAutoSave();
-      }
-
-      previewEl.innerHTML = content || "";
+      // Afficher le rendu LaTeX dans le preview
+      previewEl.innerHTML = rawContent;
       renderLatexInElement(previewEl);
     }
 
@@ -182,6 +165,14 @@ const textConfig = {
       originalHeight = blockEl.offsetHeight;
       blockEl.style.minHeight = originalHeight + "px";
       blockEl.style.height = "auto";
+
+      // ✅ Mettre le code BRUT dans l'éditeur
+      let rawContent = blockData.content;
+      if (typeof rawContent === 'object' && rawContent !== null) {
+        rawContent = rawContent.text || rawContent.content || "";
+      }
+      
+      sourceEl.innerHTML = rawContent || "";
 
       selectBlock();
       container.classList.add("is-editing");
@@ -232,7 +223,7 @@ const textConfig = {
       });
 
       sourceEl.addEventListener("input", () => {
-        const content = normalizeContent(sourceEl.innerHTML);
+        const content = sourceEl.innerHTML;
         blockData.content = content;
         updateBlockContent(blockData.id, { content });
         adjustHeight();
@@ -245,7 +236,6 @@ const textConfig = {
       sourceEl.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
           e.preventDefault();
-          sourceEl.innerHTML = blockData.content || "";
           container.classList.remove("is-editing");
           if (originalHeight) {
             blockEl.style.height = originalHeight + "px";
@@ -256,19 +246,15 @@ const textConfig = {
       });
     }
 
-    // ✅ Extraire le texte si content est un objet
-    let contentToShow = blockData.content;
-    if (typeof contentToShow === 'object' && contentToShow !== null) {
-      contentToShow = contentToShow.text || contentToShow.content || "";
+    // Initialisation
+    let rawContent = blockData.content;
+    if (typeof rawContent === 'object' && rawContent !== null) {
+      rawContent = rawContent.text || rawContent.content || "";
     }
     
-    previewEl.innerHTML = contentToShow || "";
+    previewEl.innerHTML = rawContent || "";
     renderLatexInElement(previewEl);
-    sourceEl.innerHTML = contentToShow || "";
-
-    if (!blockData.content) {
-      saveText();
-    }
+    sourceEl.innerHTML = rawContent || "";
   }
 };
 
@@ -279,23 +265,16 @@ export const renderText = textBlock.render;
 export const attachTextEvents = textBlock.attachEvents;
 export const addText = textBlock.add;
 
-// ✅ Fonction de sérialisation pour la sauvegarde
 export function serializeText(blockEl) {
-  const container = blockEl.querySelector(".text-container");
+  // ✅ Lire le code BRUT depuis le source
+  const sourceEl = blockEl.querySelector(".text-source");
   const previewEl = blockEl.querySelector(".text-preview");
   
-  // Récupérer le contenu depuis le preview ou le source
   let content = "";
-  if (previewEl) {
+  if (sourceEl && sourceEl.innerHTML) {
+    content = sourceEl.innerHTML;
+  } else if (previewEl) {
     content = previewEl.innerHTML;
-  }
-  
-  // Si le preview est vide, essayer le source
-  if (!content || content === "") {
-    const sourceEl = blockEl.querySelector(".text-source");
-    if (sourceEl) {
-      content = sourceEl.innerHTML;
-    }
   }
   
   return content;

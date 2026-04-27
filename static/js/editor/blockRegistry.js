@@ -3,16 +3,22 @@
 import { renderSituation,serializeSituation } from "./situation.js";
 import { renderProblematic,serializeProblematic } from "./problematic.js";
 import { renderText, serializeText} from "./text.js";
-import { renderImage } from "./image.js";
+import { renderImage,serializeImage } from "./image.js";
 import { renderQuestion, serializeQuestion } from "./question.js";
 import { renderSpaceAnswer,serializeSpaceAnswer } from "./spaceAnswer.js";
 import { renderTable,serializeTable} from "./table.js";
-import { renderGraph } from "./graph.js";
+import { renderGraph, serializeGraph } from "./graph.js";
 import { renderQcm,serializeQcm} from "./qcm.js";
-
+import { renderVideo, serializeVideo } from "./video.js";
+import { renderAudio, serializeAudio } from "./audio.js";
+//import { renderMindmap, serializeMindmap } from "./mindmap.js";
+import { renderMindmap, serializeMindmap } from "./mindmap/index.js";
 export const blockRegistry = {
   situation: {
-    render: (blockData) => renderSituation(blockData),
+    render: (blockData) => {
+      //console.log("🔵 REGISTRY - blockData reçu:", JSON.stringify(blockData, null, 2));
+      return renderSituation(blockData);
+    },
     serialize: (blockEl) => serializeSituation(blockEl)
   },
   problematic: {
@@ -24,9 +30,10 @@ export const blockRegistry = {
     serialize: (blockEl) => serializeText(blockEl)
   },
   image: {
-    render: (blockData) => renderImage(blockData)
+    render: (blockData) => renderImage(blockData),
+    serialize: (blockEl) => serializeImage(blockEl)
   },
-// blockRegistry.js - assure-toi que cette ligne est présente
+
 question: {
   render: (blockData) => renderQuestion(blockData),
   serialize: (blockEl) => serializeQuestion(blockEl)  
@@ -40,11 +47,24 @@ question: {
     serialize: (blockEl) => serializeTable(blockEl)
   },
   graph: {
-    render: (blockData) => renderGraph(blockData)
+    render: (blockData) => renderGraph(blockData),
+    serialize: (blockEl) => serializeGraph(blockEl),
   },
   qcm: {
     render: (blockData) => renderQcm(blockData),
     serialize: (blockEl) => serializeQcm(blockEl)
+  },
+  video: {
+    render: (blockData) => renderVideo(blockData),
+    serialize: (blockEl) => serializeVideo(blockEl)
+  },
+  audio: {
+    render: (blockData) => renderAudio(blockData),
+    serialize: (blockEl) => serializeAudio(blockEl)
+  },
+  mindmap: {
+    render: (blockData) => renderMindmap(blockData),
+    serialize: (blockEl) => serializeMindmap(blockEl)
   },
 };
 
@@ -59,29 +79,19 @@ export function renderBlock(blockData) {
   return handler.render(blockData);
 }
 
-// blockRegistry.js - ajoute ce log
-
-// blockRegistry.js - dans serializeBlock
-
-// blockRegistry.js
 
 export function serializeBlock(blockEl) {
   const blockType = blockEl.dataset.type;
   const handler = blockRegistry[blockType];
   
-  console.log("🔵 serializeBlock appelé pour:", blockType);
-  console.log("🔵 handler existe:", !!handler);
-  console.log("🔵 handler.serialize existe:", !!(handler && handler.serialize));
+  //console.log("🔵 serializeBlock - type:", blockType);
   
   if (handler && handler.serialize) {
     const result = handler.serialize(blockEl);
-    console.log("🔵 Résultat serialize pour", blockType, ":", result);
+    //console.log("🔵 serializeBlock - résultat pour", blockType, ":", result);
     return result;
   }
   
-  // Fallback
   const contentEl = blockEl.querySelector('[data-field="content"]');
-  const fallback = contentEl ? contentEl.innerHTML : '';
-  console.log("🔵 FALLBACK utilisé pour", blockType, ":", fallback);
-  return fallback;
+  return contentEl ? contentEl.innerHTML : '';
 }

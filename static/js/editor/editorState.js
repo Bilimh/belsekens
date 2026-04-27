@@ -6,12 +6,12 @@ export const editorState = {
 
 export function setBlocks(blocks) {
   editorState.blocks = blocks;
-  console.log('État initialisé:', editorState.blocks);
+
 }
 
 export function addBlockToState(blockData) {
   editorState.blocks.push(blockData);
-  console.log('Bloc ajouté à l\'état:', blockData);
+
 }
 
 export function removeBlockFromState(blockId) {
@@ -19,7 +19,7 @@ export function removeBlockFromState(blockId) {
   const id = typeof blockId === 'string' ? parseInt(blockId) : blockId;
   const before = editorState.blocks.length;
   editorState.blocks = editorState.blocks.filter((block) => block.id !== id);
-  console.log(`Bloc ${blockId} supprimé (${before} -> ${editorState.blocks.length})`);
+
 }
 
 export function updateBlockPosition(blockId, left, top) {
@@ -27,7 +27,7 @@ export function updateBlockPosition(blockId, left, top) {
   if (!block) return;
   
   block.position = { left, top };
-  console.log(`Position mise à jour pour ${blockId}:`, block.position);
+ 
 }
 
 export function updateBlockContent(blockId, updates) {
@@ -35,7 +35,7 @@ export function updateBlockContent(blockId, updates) {
   if (!block) return;
   
   Object.assign(block, updates);
-  console.log(`Contenu mis à jour pour ${blockId}:`, block);
+
 }
 
 export function updateBlockSize(blockId, width, height) {
@@ -43,7 +43,7 @@ export function updateBlockSize(blockId, width, height) {
   if (!block) return;
   
   block.size = { width, height };
-  console.log(`Taille mise à jour pour ${blockId}:`, block.size);
+
 }
 
 // editorState.js - modifier la fonction syncBlocksFromDOM
@@ -105,7 +105,7 @@ export function syncBlocksFromDOM() {
   // Supprimer les blocs qui ne sont plus dans le DOM
   editorState.blocks = editorState.blocks.filter(block => domBlockIds.has(String(block.id)));
   
-  console.log('État synchronisé depuis le DOM:', editorState.blocks);
+
   return editorState;
 }
 // Exposer globalement pour delete.js

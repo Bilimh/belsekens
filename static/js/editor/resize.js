@@ -11,7 +11,7 @@ export function makeResizable(blockEl) {
   const handles = blockEl.querySelectorAll(".resize-handle");
   if (!handles.length) return;
 
-  // ✅ Détecter si c'est un bloc tableau
+  // Détecter si c'est un bloc tableau
   const isTableBlock = blockEl.classList.contains('table-block');
 
   handles.forEach(handle => {
@@ -39,8 +39,9 @@ export function makeResizable(blockEl) {
       const paddingRight = parseInt(getComputedStyle(workspace).paddingRight) || 0;
       const paddingBottom = parseInt(getComputedStyle(workspace).paddingBottom) || 0;
       
-      const maxWidth = workspaceRect.width - 20;
-      const maxHeight = workspaceRect.height - 20;
+      const maxWidth = workspaceRect.width - paddingLeft - paddingRight - 20;
+      // ✅ Utiliser scrollHeight pour la hauteur réelle
+      const maxHeight = workspace.scrollHeight - paddingTop - paddingBottom - 20;
       const minWidth = 200;
       const minHeight = 100;
 
@@ -102,24 +103,27 @@ export function makeResizable(blockEl) {
         if (newHeight < minHeight) newHeight = minHeight;
         if (newHeight > maxHeight) newHeight = maxHeight;
 
-        // ✅ Pour les blocs tableau, ne pas modifier la position
+        // ✅ Contraintes de position avec scrollHeight
         if (!isTableBlock) {
-          // Contraintes de position
+          const maxBottom = workspace.scrollHeight - paddingBottom;
+          const maxRight = workspaceRect.width - paddingRight;
+          
           if (newLeft < paddingLeft) newLeft = paddingLeft;
-          if (newLeft + newWidth > workspaceRect.width - paddingRight) {
-            newLeft = workspaceRect.width - newWidth - paddingRight;
+          if (newLeft + newWidth > maxRight) {
+            newLeft = maxRight - newWidth;
           }
           if (newTop < paddingTop) newTop = paddingTop;
-          if (newTop + newHeight > workspaceRect.height - paddingBottom) {
-            newTop = workspaceRect.height - newHeight - paddingBottom;
+          // Tolérance de 2px pour éviter les arrondis
+          if (newTop + newHeight > maxBottom + 2) {
+            newTop = maxBottom - newHeight;
           }
+          if (newTop < paddingTop) newTop = paddingTop;
           
-          // Application des nouvelles positions (uniquement pour les blocs non-tableau)
           blockEl.style.left = `${newLeft}px`;
           blockEl.style.top = `${newTop}px`;
         }
 
-        // Application des nouvelles dimensions (pour tous les blocs)
+        // Application des nouvelles dimensions
         blockEl.style.width = `${newWidth}px`;
         blockEl.style.minHeight = `${newHeight}px`;
         blockEl.style.height = `${newHeight}px`;
@@ -136,7 +140,6 @@ export function makeResizable(blockEl) {
         if (blockId) {
           updateBlockSize(blockId, blockEl.offsetWidth, blockEl.offsetHeight);
 
-          // ✅ Pour les blocs non-tableau, mettre à jour la position
           if (!isTableBlock) {
             const newLeft = parseInt(blockEl.style.left);
             const newTop = parseInt(blockEl.style.top);

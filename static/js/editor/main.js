@@ -3,11 +3,15 @@ import { addSituation } from "./situation.js";
 import { addProblematic } from "./problematic.js";
 import { addText } from "./text.js";
 import { addImage } from "./image.js";
+import { addVideo } from "./video.js";
+import { addAudio } from "./audio.js"
 import { addQuestion } from "./question.js";
 import { addSpaceAnswer } from "./spaceAnswer.js";
 import { addTable } from "./table.js";
 import { addGraph } from "./graph.js";
 import { addQcm } from "./qcm.js";
+//import { addMindmap } from "./mindmap.js";
+import { addMindmap } from "./mindmap/index.js";
 
 import { makeDraggable } from "./drag.js";
 import { makeDeletable } from "./delete.js";
@@ -28,6 +32,9 @@ const addSpaceAnswerBtn = document.getElementById("add-spaceanswer-btn");
 const addTableBtn = document.getElementById("add-table-btn");
 const addGraphBtn = document.getElementById("add-graph-btn");
 const addQcmBtn = document.getElementById("add-qcm-btn");
+const addVideoBtn = document.getElementById("add-video-btn");
+const addAudioBtn = document.getElementById("add-audio-btn");
+const addMindmapBtn = document.getElementById("add-mindmap-btn");
 
 const saveDocumentBtn = document.getElementById("save-document-btn");
 
@@ -129,8 +136,8 @@ async function saveDocument() {
   const fichierSlug = window.BELSEKENS_FICHIER_SLUG;
   const url = `/api/save/${cheminDossier}/fichier/${fichierSlug}/`;
 
-  console.log("📤 Sauvegarde:", pages.length, "pages");
-  console.log("📦 Pages:", pages.map(p => `${p.pageNumber}: ${p.blocks.length} blocs`));
+  //console.log("📤 Sauvegarde:", pages.length, "pages");
+  //console.log("📦 Pages:", pages.map(p => `${p.pageNumber}: ${p.blocks.length} blocs`));
 
   try {
     const response = await fetch(url, {
@@ -151,7 +158,7 @@ async function saveDocument() {
     if (result.success) {
       hasUnsavedChanges = false;
       updatePageTitle();
-      console.log("✅ Document sauvegardé avec", pages.length, "pages");
+      //console.log("✅ Document sauvegardé avec", pages.length, "pages");
       showAutoSaveNotification();
     } else {
       console.error("❌ Erreur:", result.error);
@@ -250,7 +257,7 @@ function addBlock(blockAddFunction, targetWorkspace, blockName) {
     makeDeletable(blockEl);
     makeResizable(blockEl);
 
-    console.log(`✅ ${blockName} ajouté`);
+    //console.log(`✅ ${blockName} ajouté`);
     triggerAutoSave();
   }
 
@@ -288,7 +295,7 @@ function setupAutoSaveDetection() {
   });
 
   const allAddButtons = [addSituationBtn, addProblematicBtn, addTextBtn, addImageBtn,
-    addQuestionBtn, addSpaceAnswerBtn, addTableBtn, addGraphBtn, addQcmBtn].filter(btn => btn);
+    addQuestionBtn, addSpaceAnswerBtn, addTableBtn, addGraphBtn, addQcmBtn,addVideoBtn,addAudioBtn,addMindmapBtn].filter(btn => btn);
   allAddButtons.forEach(btn => {
     if (btn) btn.addEventListener('click', () => setTimeout(() => triggerAutoSave(), 100));
   });
@@ -379,6 +386,21 @@ if (addGraphBtn) {
 if (addQcmBtn) {
   addQcmBtn.addEventListener("click", () => {
     addBlock(addQcm, getActiveWorkspace(), "Qcm");
+  });
+}
+if (addVideoBtn) {
+  addVideoBtn.addEventListener("click", () => {
+    addBlock(addVideo, getActiveWorkspace(), "Vidéo");
+  });
+}
+if (addAudioBtn) {
+  addAudioBtn.addEventListener("click", () => {
+    addBlock(addAudio, getActiveWorkspace(), "Audio");
+  });
+}
+if (addMindmapBtn) {
+  addMindmapBtn.addEventListener("click", () => {
+    addBlock(addMindmap, getActiveWorkspace(), "Carte mentale");
   });
 }
 

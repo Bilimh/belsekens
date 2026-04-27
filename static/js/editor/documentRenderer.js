@@ -60,8 +60,15 @@ function renderMultiPage(pages) {
       // ✅ Normalisation complète des données
       let renderData = { ...blockData };
       
-      // Extraire le contenu et le numéro de question si présent
-      if (blockData.content && typeof blockData.content === 'object') {
+      // ✅ Pour les blocs situation, extraire correctement les données
+      if (blockData.type === 'situation' && blockData.content && typeof blockData.content === 'object') {
+        renderData.title = blockData.content.title || blockData.title;
+        renderData.content = blockData.content.content || blockData.content;
+        renderData.imageUrl = blockData.content.imageUrl || null;
+        renderData.imageCaption = blockData.content.imageCaption || "";
+      }
+      // Pour les autres blocs avec content objet
+      else if (blockData.content && typeof blockData.content === 'object') {
         if (blockData.content.text) {
           renderData.content = blockData.content.text;
         }
@@ -78,8 +85,26 @@ function renderMultiPage(pages) {
         renderData.questionNumber = blockData.questionNumber;
       }
       
+      //console.log("🔵 RENDERER - blockData normalisé:", renderData);
+      
       const blockEl = renderBlock(renderData);
       if (!blockEl) return;
+
+      if (blockData.type === 'situation' && blockData.imageUrl) {
+        // Attendre que le bloc soit dans le DOM
+        setTimeout(() => {
+          const placeholder = blockEl.querySelector('[data-action="upload-image"]');
+          if (placeholder && blockData.imageUrl) {
+            // Appeler setupImageUpload via le bloc
+            const blockInstance = situationBlock;
+            if (blockInstance && blockInstance.setupImageUpload) {
+              blockInstance.setupImageUpload(blockEl, blockData);
+            }
+          }
+        }, 10);
+      }
+
+      blockEl.dataset.page = pageNumber;
       
       // Appliquer position et taille
       if (blockData.position) {
@@ -130,7 +155,13 @@ function renderSinglePage(blocks, workspace) {
   blocks.forEach((blockData) => {
     let renderData = { ...blockData };
     
-    if (blockData.content && typeof blockData.content === 'object') {
+    if (blockData.type === 'situation' && blockData.content && typeof blockData.content === 'object') {
+      renderData.title = blockData.content.title || blockData.title;
+      renderData.content = blockData.content.content || blockData.content;
+      renderData.imageUrl = blockData.content.imageUrl || null;
+      renderData.imageCaption = blockData.content.imageCaption || "";
+    }
+    else if (blockData.content && typeof blockData.content === 'object') {
       if (blockData.content.text) renderData.content = blockData.content.text;
       else if (blockData.content.content) renderData.content = blockData.content.content;
       if (blockData.content.questionNumber) {

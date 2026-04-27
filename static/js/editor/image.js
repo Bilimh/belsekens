@@ -1,3 +1,5 @@
+// image.js
+
 import { createBlockType } from "./baseBlock.js";
 import { updateBlockContent } from "./editorState.js";
 
@@ -8,7 +10,7 @@ async function uploadImage(file, blockId) {
   formData.append('block_id', blockId);
   
   try {
-    const response = await fetch('/documents/upload-image/', {
+    const response = await fetch('/api/upload-image/', {
       method: 'POST',
       headers: {
         'X-CSRFToken': getCookie('csrftoken')
@@ -45,77 +47,9 @@ function getCookie(name) {
   return cookieValue;
 }
 
-// Crée l'input file
-function createFileInput(blockEl, onUpload) {
-  const fileInput = document.createElement('input');
-  fileInput.type = 'file';
-  fileInput.accept = 'image/*';
-  fileInput.style.display = 'none';
-  
-  fileInput.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (file && file.type.startsWith('image/')) {
-      showUploadingIndicator(blockEl);
-      
-      try {
-        const blockId = blockEl.dataset.id;
-        const imageUrl = await uploadImage(file, blockId);
-        onUpload(imageUrl);
-        hideUploadingIndicator(blockEl);
-      } catch (error) {
-        console.error("Erreur:", error);
-        showUploadError(blockEl, error.message);
-      }
-    } else {
-      alert("Veuillez sélectionner un fichier image valide");
-    }
-  });
-  
-  document.body.appendChild(fileInput);
-  return fileInput;
-}
-
-// Indicateur de chargement
-function showUploadingIndicator(blockEl) {
-  const container = blockEl.querySelector('.image-container');
-  if (container) {
-    container.innerHTML = `
-      <div class="image-uploading">
-        <i class="fas fa-spinner fa-pulse"></i>
-        <span>Upload en cours...</span>
-      </div>
-    `;
-  }
-}
-
-function hideUploadingIndicator(blockEl) {
-  // Rien à faire
-}
-
-function showUploadError(blockEl, message) {
-  const container = blockEl.querySelector('.image-container');
-  if (container) {
-    container.innerHTML = `
-      <div class="image-error">
-        <i class="fas fa-exclamation-triangle"></i>
-        <span>Erreur: ${message}</span>
-        <button class="retry-upload-btn">Réessayer</button>
-      </div>
-    `;
-    
-    const retryBtn = container.querySelector('.retry-upload-btn');
-    if (retryBtn) {
-      retryBtn.addEventListener('click', () => {
-        const fileInput = blockEl._fileInput;
-        if (fileInput) fileInput.click();
-      });
-    }
-  }
-}
-
 const imageConfig = {
   defaultTitle: "Image",
-  defaultContent: "", // Stocke l'URL de l'image (caché)
+  defaultContent: "", // Stocke l'URL de l'image
   defaultWidth: 400,
   defaultHeight: 350,
   defaultLeft: 40,
@@ -125,7 +59,8 @@ const imageConfig = {
   headerIcon: "fas fa-image",
   className: "image-block",
   autoStack: true,
-  fields: ["title"], // On enlève "content" des champs éditables visibles
+  editableFields: ["title", "content"], // ✅ content est l'URL de l'image
+  
   customHtml: (data) => {
     const hasImage = data.content && data.content !== "";
     
@@ -145,43 +80,125 @@ const imageConfig = {
             <small>PNG, JPG, GIF max 5MB</small>
           </div>
         `}
-        <!-- Champ content caché pour stocker l'URL -->
-        <input type="hidden" class="image-url-field" value="${data.content || ''}">
       </div>
     `;
   },
+  
+  customCSS: `
+    .image-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+    }
+    
+    .image-upload-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 40px;
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+    }
+    
+    .image-upload-placeholder:hover {
+      border-color: #10b981;
+      background: #f0fdf4;
+    }
+    
+    .image-upload-placeholder i {
+      font-size: 48px;
+      color: #10b981;
+    }
+    
+    .image-upload-placeholder span {
+      font-size: 14px;
+      color: #475569;
+    }
+    
+    .image-upload-placeholder small {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    
+    .image-preview-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 200px;
+    }
+    
+    .block-image-preview {
+      width: 100%;
+      height: auto;
+      max-height: 300px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+    
+    .image-remove-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(239, 68, 68, 0.9);
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    
+    .image-remove-btn:hover {
+      background: #ef4444;
+      transform: scale(1.05);
+    }
+  `,
+
   customEvents: (blockEl, blockData) => {
     let fileInput = null;
-    const titleEl = blockEl.querySelector('[data-field="title"]');
-    const hiddenUrlField = blockEl.querySelector('.image-url-field');
     
-    // Fonction pour mettre à jour l'image
-    const updateImage = (imageUrl) => {
-      if (hiddenUrlField) {
-        hiddenUrlField.value = imageUrl;
-        // Met à jour les données du bloc
-        updateBlockContent(blockData.id, { content: imageUrl });
+    // ✅ Fonction pour mettre à jour l'image dans les données
+    const updateImage = async (imageUrl) => {
+      // Mettre à jour les données du bloc
+      blockData.content = imageUrl;
+      await updateBlockContent(blockData.id, { content: imageUrl });
+      
+      // ✅ Forcer une sauvegarde immédiate
+      if (window.triggerAutoSave) {
+        setTimeout(() => window.triggerAutoSave(), 100);
       }
+      
       refreshImageDisplay();
     };
     
-    // Rafraîchit l'affichage
+    // ✅ Rafraîchit l'affichage
     const refreshImageDisplay = () => {
       const container = blockEl.querySelector('.image-container');
-      const currentImage = hiddenUrlField ? hiddenUrlField.value : "";
+      const currentImage = blockData.content || "";
       const hasImage = currentImage && currentImage !== "";
-      const title = titleEl ? titleEl.textContent.trim() : "Image";
       
       if (container) {
         if (hasImage) {
           container.innerHTML = `
             <div class="image-preview-wrapper">
-              <img src="${currentImage}" alt="${title}" class="block-image-preview">
+              <img src="${currentImage}" alt="Image" class="block-image-preview">
               <button class="image-remove-btn" title="Supprimer l'image">
                 <i class="fas fa-trash-alt"></i>
               </button>
             </div>
-            <input type="hidden" class="image-url-field" value="${currentImage}">
           `;
           
           const removeBtn = container.querySelector('.image-remove-btn');
@@ -189,7 +206,12 @@ const imageConfig = {
             removeBtn.addEventListener('click', async (e) => {
               e.stopPropagation();
               await deleteImage(currentImage, blockData.id);
-              removeImage();
+              blockData.content = "";
+              await updateBlockContent(blockData.id, { content: "" });
+              refreshImageDisplay();
+              if (window.triggerAutoSave) {
+                setTimeout(() => window.triggerAutoSave(), 100);
+              }
             });
           }
         } else {
@@ -199,7 +221,6 @@ const imageConfig = {
               <span>Cliquez pour uploader une image</span>
               <small>PNG, JPG, GIF max 5MB</small>
             </div>
-            <input type="hidden" class="image-url-field" value="">
           `;
           
           const placeholder = container.querySelector('.image-upload-placeholder');
@@ -209,28 +230,13 @@ const imageConfig = {
             });
           }
         }
-        
-        // Met à jour la référence au champ caché
-        const newHiddenField = container.querySelector('.image-url-field');
-        if (newHiddenField && newHiddenField !== hiddenUrlField) {
-          // Re-attache les événements si nécessaire
-        }
       }
-    };
-    
-    // Supprime l'image
-    const removeImage = () => {
-      if (hiddenUrlField) {
-        hiddenUrlField.value = "";
-        updateBlockContent(blockData.id, { content: "" });
-      }
-      refreshImageDisplay();
     };
     
     // Supprime l'image du serveur
     async function deleteImage(imageUrl, blockId) {
       try {
-        const response = await fetch('/documents/delete-image/', {
+        const response = await fetch('/api/delete-image/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -248,14 +254,31 @@ const imageConfig = {
       }
     }
     
-    // Crée l'input file
-    fileInput = createFileInput(blockEl, (imageUrl) => {
-      updateImage(imageUrl);
-    });
+    // ✅ Crée l'input file et gère l'upload
+    const setupFileInput = () => {
+      fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'image/*';
+      fileInput.style.display = 'none';
+      
+      fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+          try {
+            const imageUrl = await uploadImage(file, blockData.id);
+            await updateImage(imageUrl);
+          } catch (error) {
+            console.error("Erreur:", error);
+            alert("Erreur lors de l'upload de l'image");
+          }
+        }
+        fileInput.value = '';
+      });
+      
+      document.body.appendChild(fileInput);
+    };
     
-    blockEl._fileInput = fileInput;
-    
-    // Initialise l'affichage
+    setupFileInput();
     refreshImageDisplay();
   }
 };
@@ -266,3 +289,9 @@ export const createImageData = imageBlock.createData;
 export const renderImage = imageBlock.render;
 export const attachImageEvents = imageBlock.attachEvents;
 export const addImage = imageBlock.add;
+
+// ✅ Exporter la fonction de sérialisation pour la sauvegarde
+export function serializeImage(blockEl) {
+  const img = blockEl.querySelector('img');
+  return img ? img.src : '';
+}

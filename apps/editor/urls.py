@@ -32,4 +32,9 @@ urlpatterns = [
     # API - Sauvegarde (avec /fichier/)
     path('api/save/<path:chemin_dossier>/fichier/<slug:fichier_slug>/', views.save_fichier_api, name='save_fichier_api'),
     path('export/<path:chemin_dossier>/<slug:fichier_slug>/pdf/', views.export_pdf, name='export_pdf'),
+
+    path('api/upload-image/', views.upload_image, name='upload_image'),
+    path('api/delete-image/', views.delete_image, name='delete_image'),
+    path('api/upload-video/', views.upload_video, name='upload_video'),
+    path('api/upload-audio/', views.upload_audio, name='upload_audio'),
 ]

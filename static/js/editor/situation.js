@@ -1,9 +1,10 @@
 // situation.js
 
 import { createBlockType } from "./baseBlock.js";
+import { updateBlockContent } from "./editorState.js";
+import { renderLatexInElement } from "../katex/latexRenderer.js";
 
 const situationConfig = {
-  // Valeurs par défaut
   defaultTitle: "SITUATION: Les abonnés d'une page Instagram",
   defaultContent: `Moussa, 18 ans, lance sa propre marque de vêtements streetwear.
 Pour se faire connaître, il ouvre une page Instagram et commence à publier ses créations.
@@ -23,143 +24,304 @@ Et ainsi de suite, semaine après semaine...`,
   icon: "fas fa-lightbulb",
   iconColor: "#53195D",
   className: "situation-block",
-  
-  // Layout personnalisé
-  layout: "custom",
-  
-  // Champs éditables
+  autoStack: true,
+
   editableFields: ["title", "content", "imageCaption"],
-  
-  // Upload d'image
+
   enableImageUpload: true,
   imageWidth: 270,
   imageHeight: 180,
-  
-  // Styles personnalisés
-  customStyles: {
-    backgroundColor: "white",
-    borderRadius: "8px",
-    overflow: "hidden"
-  },
-  
-  autoStack: true,
-  
-  // HTML personnalisé
-  customHtml: (data) => {
-    const hasImage = data.imageUrl && data.imageUrl !== "";
-    
-    // ✅ Extraire le texte si content est un objet
-    let contentText = data.content;
-    if (typeof contentText === 'object' && contentText !== null) {
-      contentText = contentText.text || contentText.content || situationConfig.defaultContent;
-    }
-    if (!contentText || contentText === '') {
-      contentText = situationConfig.defaultContent;
-    }
-    
+
+  customHtml: () => {
     return `
-      <div class="situation-activite_header">
-        <p class="situation-activite_header_title" data-field="title">
-          ${data.title}
-        </p>
-      </div>
-      <div class="situation-context-container">
-        <div class="situation-article">
-          ${hasImage ? `
-            <div class="situation-image-wrapper" style="float: right; width: ${270}px; margin: 0 0 10px 15px;">
-              <img src="${data.imageUrl}" alt="${data.imageCaption || 'Image'}" style="width: 100%; height: ${180}px; object-fit: cover; border-radius: 6px;">
-              ${data.imageCaption ? `<div class="situation-image-caption" style="font-size: 11px; color: #666; text-align: center; margin-top: 5px;" data-field="imageCaption" contenteditable="true">${data.imageCaption}</div>` : ''}
-            </div>
-          ` : `
-            <div class="situation-image-upload-area" data-action="upload-image" style="float: right; width: 270px; height: 180px; background: #f0f0f0; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; margin: 0 0 10px 15px;">
-              <i class="fas fa-camera" style="font-size: 24px; color: #666; margin-bottom: 5px;"></i>
-              <span style="color: #666; font-size: 11px; text-align: center;">Cliquer pour ajouter une image</span>
-            </div>
-          `}
-          <div class="situation-text" style="border: 2px solid #E0C4F4; border-radius: 5px; margin-top: 5px; line-height: 1.3rem;">
-            <div style="padding: 10px;" data-field="content" contenteditable="true">
-              ${contentText}
-            </div>
-          </div>
-          <div style="clear: both;"></div>
+      <div class="situation-container">
+        <div class="situation-header">
+          <div class="situation-title" data-field="title" contenteditable="true">Situation</div>
         </div>
+        
+        <div class="situation-content">
+          <div class="situation-image-area" data-action="upload-image" 
+               style="float: right; width: 270px; min-height: 180px; background: #f0f0f0; border-radius: 6px; margin: 0 0 10px 15px;">
+          </div>
+          
+          <div class="situation-preview latex-enabled"></div>
+          
+          <div class="situation-editor">
+            <div class="situation-source" contenteditable="true"></div>
+          </div>
+        </div>
+        
+        <div style="clear: both;"></div>
       </div>
     `;
   },
-  
-  // Styles CSS personnalisés
+
   customCSS: `
-    .situation-activite_header_title {
-      font-size: 1.5rem;
-      line-height: 1.75rem;
-      color: #53195D;
-      font-family: 'Noto Sans', sans-serif;
-      font-weight: bold;
-      margin-bottom: 7.5px;
-      padding: 0 5px;
-    }
-    
-    .situation-article {
+    .situation-container {
       width: 100%;
-      margin: auto;
+      background: transparent;
+      cursor: pointer;
     }
-    
-    .situation-text ul, .situation-text ol {
-      margin: 10px 0;
-      padding-left: 25px;
+
+    .situation-header {
+      margin-bottom: 15px;
     }
-    
-    .situation-text li {
-      margin: 5px 0;
+
+    .situation-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #53195D;
+      padding: 5px;
+      border-bottom: 2px solid #E0C4F4;
+      outline: none;
     }
-    
-    .situation-image-upload-area:hover {
-      background: #e8e8e8 !important;
-      border: 2px dashed #53195D;
+
+    .situation-title:empty:before {
+      content: "Titre de la situation";
+      color: #94a3b8;
+      font-style: italic;
     }
-    
-    .situation-image-wrapper {
+
+    .situation-preview {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px 20px;
+      border: 1px solid #E0C4F4;
       transition: all 0.2s ease;
+      font-size: 16px;
+      line-height: 1.6;
+      color: #1e293b;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 150px;
     }
-    
-    .situation-image-wrapper img {
-      transition: transform 0.2s ease;
+
+    .situation-preview:hover {
+      border-color: #53195D;
+      background: #fcfaff;
     }
-    
-    .situation-image-wrapper img:hover {
-      transform: scale(1.02);
+
+ .situation-preview.latex-enabled .katex,
+.situation-preview .katex {
+  font-size: 1.1em !important;
+}
+    .situation-preview.latex-enabled .katex-display,
+.situation-preview .katex-display {
+  font-size: 1.2em !important;
+}
+
+    .situation-editor {
+      display: none;
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px 20px;
+      border: 2px solid #53195D;
     }
-    
-    .situation-image-caption {
+
+    .situation-container.is-editing .situation-preview {
+      display: none;
+    }
+
+    .situation-container.is-editing .situation-editor {
+      display: block;
+    }
+
+    .situation-source {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 16px;
+      line-height: 1.6;
+      color: #1e293b;
+      outline: none;
       cursor: text;
+      min-height: 150px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: monospace;
+    }
+
+    .situation-source:focus {
+      border-color: #53195D;
+      box-shadow: 0 0 0 3px rgba(83,25,93,0.1);
+    }
+
+    .situation-source:empty:before {
+      content: "Décrivez la situation ici... (LaTeX supporté : $...$ ou $$...$$)";
+      color: #94a3b8;
+      font-style: italic;
+    }
+  `,
+
+  customEvents: (blockEl, blockData) => {
+    const container = blockEl.querySelector(".situation-container");
+    const previewEl = blockEl.querySelector(".situation-preview");
+    const sourceEl = blockEl.querySelector(".situation-source");
+    const titleEl = blockEl.querySelector(".situation-title");
+    
+    let originalHeight = null;
+
+    function normalizeContent(html) {
+      if (!html || html === "<br>" || html === "&nbsp;" || html === "<div><br></div>") {
+        return "";
+      }
+      return html;
+    }
+
+    // ✅ Sauvegarde : stocker le code BRUT, afficher le rendu
+    function saveContent() {
+      // Récupérer le code brut depuis l'éditeur
+      const rawContent = sourceEl.innerHTML;
+      
+      // Stocker le code brut
+      blockData.content = rawContent;
+      updateBlockContent(blockData.id, { content: rawContent });
+
+      // Afficher le rendu LaTeX dans le preview
+      previewEl.innerHTML = rawContent;
+      renderLatexInElement(previewEl);
+    }
+
+    function saveTitle() {
+      if (titleEl) {
+        const title = normalizeContent(titleEl.innerHTML);
+        blockData.title = title || "Situation";
+        updateBlockContent(blockData.id, { title: blockData.title });
+      }
+    }
+
+    function selectBlock() {
+      document.querySelectorAll(".block").forEach(block => {
+        block.classList.remove("selected");
+      });
+      blockEl.classList.add("selected");
+    }
+
+    function openEditMode() {
+      originalHeight = blockEl.offsetHeight;
+      blockEl.style.minHeight = originalHeight + "px";
+      blockEl.style.height = "auto";
+
+      // ✅ Mettre le code BRUT dans l'éditeur
+      let rawContent = blockData.content;
+      if (typeof rawContent === 'object' && rawContent !== null) {
+        rawContent = rawContent.text || rawContent.content || "";
+      }
+      
+      sourceEl.innerHTML = rawContent || "";
+
+      selectBlock();
+      container.classList.add("is-editing");
+      sourceEl.focus();
+      
+      const range = document.createRange();
+      range.selectNodeContents(sourceEl);
+      range.collapse(false);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    function closeEditMode() {
+      saveContent();
+      saveTitle();
+      container.classList.remove("is-editing");
+
+      if (originalHeight) {
+        blockEl.style.height = originalHeight + "px";
+        blockEl.style.minHeight = "";
+        originalHeight = null;
+      }
+    }
+
+    // Initialisation
+    let rawContent = blockData.content;
+    if (typeof rawContent === 'object' && rawContent !== null) {
+      rawContent = rawContent.text || rawContent.content || "";
     }
     
-    .situation-image-caption:hover {
-      background: rgba(0,0,0,0.05);
-      border-radius: 4px;
+    // Preview : rendu LaTeX
+    previewEl.innerHTML = rawContent || "";
+    renderLatexInElement(previewEl);
+    
+    // Source : code brut
+    sourceEl.innerHTML = rawContent || "";
+    
+    if (titleEl && !titleEl.innerHTML.trim()) {
+      titleEl.innerHTML = blockData.title || "Situation";
     }
-  `
+
+    if (!container.hasAttribute("data-events-attached")) {
+      container.setAttribute("data-events-attached", "true");
+
+      container.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectBlock();
+      });
+
+      container.addEventListener("dblclick", (e) => {
+        e.stopPropagation();
+        openEditMode();
+      });
+
+      previewEl.addEventListener("mousedown", (e) => {
+        e.stopPropagation();
+      });
+
+      sourceEl.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectBlock();
+      });
+
+      sourceEl.addEventListener("blur", () => {
+        closeEditMode();
+      });
+
+      sourceEl.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          container.classList.remove("is-editing");
+          if (originalHeight) {
+            blockEl.style.height = originalHeight + "px";
+            blockEl.style.minHeight = "";
+            originalHeight = null;
+          }
+        }
+      });
+
+      if (titleEl) {
+        titleEl.addEventListener("blur", () => {
+          saveTitle();
+          if (window.triggerAutoSave) window.triggerAutoSave();
+        });
+      }
+    }
+  }
 };
 
-// Crée le bloc situation
 const situationBlock = createBlockType("situation", situationConfig);
 
-// Exporte les fonctions
 export const createSituationData = situationBlock.createData;
 export const renderSituation = situationBlock.render;
 export const attachSituationEvents = situationBlock.attachEvents;
 export const addSituation = situationBlock.add;
 
-// ✅ Fonction de sérialisation pour la sauvegarde
 export function serializeSituation(blockEl) {
-  const titleEl = blockEl.querySelector('[data-field="title"]');
-  const contentEl = blockEl.querySelector('[data-field="content"]');
-  const imageCaptionEl = blockEl.querySelector('[data-field="imageCaption"]');
+  const titleEl = blockEl.querySelector(".situation-title");
+  // ✅ Lire le code BRUT depuis le source
+  const sourceEl = blockEl.querySelector(".situation-source");
   const imageEl = blockEl.querySelector('img');
+  const imageCaptionEl = blockEl.querySelector('[data-field="imageCaption"]');
+  
+  let content = "";
+  if (sourceEl && sourceEl.innerHTML) {
+    content = sourceEl.innerHTML;
+  }
   
   return {
     title: titleEl ? titleEl.innerHTML : '',
-    content: contentEl ? contentEl.innerHTML : '',
+    content: content,
     imageUrl: imageEl ? imageEl.src : null,
     imageCaption: imageCaptionEl ? imageCaptionEl.innerHTML : ''
   };

@@ -4,6 +4,8 @@ import { generateId } from "./utils.js";
 import { addBlockToState, updateBlockContent } from "./editorState.js";
 import { attachBlockControls } from "./blockControls.js";
 import { setupBlockSelection } from "./selection.js";
+import { imageUploadService } from "./uploadService.js";
+import { UploadComponent } from "./uploadComponent.js";
 
 export class BaseBlock {
   constructor(type, config) {
@@ -19,6 +21,7 @@ export class BaseBlock {
       iconColor: config.iconColor || "#3b82f6",
       className: config.className || `${type}-block`,
       autoStack: config.autoStack !== false,
+      blockSpacing: config.blockSpacing || 10,
       editableFields: config.editableFields || ["title", "content"],
       enableImageUpload: config.enableImageUpload || false,
       imageWidth: config.imageWidth || 270,
@@ -48,50 +51,48 @@ export class BaseBlock {
     }
   }
 
-// baseBlock.js - méthode createData
 
-// baseBlock.js - méthode createData
 
-createData(data = {}) {
-  console.log("🔵 baseBlock.createData - data reçu:", data);
-  console.log("🔵 baseBlock.createData - questionNumber:", data.questionNumber);
-  
-  const baseData = {
-    id: data.id || generateId(this.type),
-    type: this.type,
-    title: data.title || this.config.defaultTitle,
-    content: data.content || this.config.defaultContent,
-    position: {
-      left: data.position?.left ?? this.config.defaultLeft,
-      top: data.position?.top ?? this.config.defaultTop
-    },
-    size: {
-      width: data.size?.width ?? this.config.defaultWidth,
-      height: data.size?.height ?? this.config.defaultHeight
+  createData(data = {}) {
+    //console.log("🔵 baseBlock.createData - data reçu:", data);
+    //console.log("🔵 baseBlock.createData - questionNumber:", data.questionNumber);
+
+    const baseData = {
+      id: data.id || generateId(this.type),
+      type: this.type,
+      title: data.title || this.config.defaultTitle,
+      content: data.content || this.config.defaultContent,
+      position: {
+        left: data.position?.left ?? this.config.defaultLeft,
+        top: data.position?.top ?? this.config.defaultTop
+      },
+      size: {
+        width: data.size?.width ?? this.config.defaultWidth,
+        height: data.size?.height ?? this.config.defaultHeight
+      }
+    };
+
+    // ✅ Ajouter questionNumber s'il existe
+    if (data.questionNumber !== undefined) {
+      baseData.questionNumber = data.questionNumber;
+      //console.log("🔵 baseBlock.createData - questionNumber ajouté:", data.questionNumber);
     }
-  };
-  
-  // ✅ Ajouter questionNumber s'il existe
-  if (data.questionNumber !== undefined) {
-    baseData.questionNumber = data.questionNumber;
-    console.log("🔵 baseBlock.createData - questionNumber ajouté:", data.questionNumber);
-  }
-  
-  for (const [key, value] of Object.entries(data)) {
-    if (!['id', 'type', 'title', 'content', 'position', 'size', 'questionNumber'].includes(key)) {
-      baseData[key] = value;
+
+    for (const [key, value] of Object.entries(data)) {
+      if (!['id', 'type', 'title', 'content', 'position', 'size', 'questionNumber'].includes(key)) {
+        baseData[key] = value;
+      }
     }
+
+    if (this.config.enableImageUpload) {
+      baseData.imageUrl = data.imageUrl || null;
+      baseData.imageCaption = data.imageCaption || "";
+    }
+
+    //console.log("🔵 baseBlock.createData - baseData final:", baseData);
+
+    return baseData;
   }
-  
-  if (this.config.enableImageUpload) {
-    baseData.imageUrl = data.imageUrl || null;
-    baseData.imageCaption = data.imageCaption || "";
-  }
-  
-  console.log("🔵 baseBlock.createData - baseData final:", baseData);
-  
-  return baseData;
-}
 
   // ✅ CORRIGÉE : reçoit le workspace en paramètre
   calculateNewBlockPosition(workspace) {
@@ -188,92 +189,66 @@ createData(data = {}) {
     `;
   }
 
-  generateFloatLeftLayout(data) {
-    const hasImage = data.imageUrl && data.imageUrl !== "";
-    const hasTitle = this.config.editableFields.includes("title");
-    const hasContent = this.config.editableFields.includes("content");
+  // baseBlock.js - méthode setupImageUpload complète
 
-    const imageHtml = hasImage ? `
-      <div class="block-image-wrapper float-left" style="float: left; width: ${this.config.imageWidth}px; margin: 0 15px 10px 0;">
-        <img src="${data.imageUrl}" style="width: 100%; height: ${this.config.imageHeight}px; object-fit: cover; border-radius: 6px;">
-        ${data.imageCaption ? `<div class="block-image-caption" style="font-size: 11px; color: #666; text-align: center; margin-top: 5px;" data-field="imageCaption" contenteditable="true">${data.imageCaption}</div>` : ''}
-      </div>
-    ` : `
-      <div class="block-image-placeholder float-left" data-action="upload-image" style="float: left; width: ${this.config.imageWidth}px; height: ${this.config.imageHeight}px; background: #f0f0f0; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; margin: 0 15px 10px 0;">
-        <i class="fas fa-camera" style="font-size: 24px; color: #666; margin-bottom: 5px;"></i>
-        <span style="color: #666; font-size: 11px; text-align: center;">Cliquer pour ajouter une image</span>
-      </div>
-    `;
-
-    return `
-      ${hasTitle ? `
-        <div class="block-header" data-field="title" style="background: ${this.config.headerBgColor}; color: ${this.config.headerTextColor};">
-          <i class="${this.config.icon}" style="margin-right: 8px; color: ${this.config.iconColor};"></i>
-          ${data.title}
-        </div>
-      ` : ''}
-      <div style="overflow: hidden;">
-        ${imageHtml}
-        ${hasContent ? `
-          <div class="block-content" data-field="content" contenteditable="true">
-            ${data.content}
-          </div>
-        ` : ''}
-        <div style="clear: both;"></div>
-      </div>
-    `;
+setupImageUpload(blockEl, blockData) {
+  const placeholder = blockEl.querySelector('[data-action="upload-image"]');
+  if (!placeholder) return;
+  
+  const uploadComp = new UploadComponent({
+    width: this.config.imageWidth,
+    height: this.config.imageHeight,
+    float: 'right',
+    onSuccess: (imageUrl, caption) => {
+      if (imageUrl === null) {
+        blockData.imageUrl = null;
+        blockData.imageCaption = "";
+      } else {
+        blockData.imageUrl = imageUrl;
+        if (caption !== undefined) blockData.imageCaption = caption;
+      }
+      
+      updateBlockContent(blockData.id, { 
+        imageUrl: blockData.imageUrl,
+        imageCaption: blockData.imageCaption 
+      });
+      
+      setTimeout(() => {
+        if (window.saveDocument) window.saveDocument();
+      }, 100);
+    }
+  });
+  
+  // ✅ Si une image existe déjà, l'afficher avec les contrôles
+  if (blockData.imageUrl) {
+    const imageWrapper = uploadComp.createImageWrapper(
+      blockData.imageUrl, 
+      blockData.imageCaption || '',
+      async () => {
+        blockData.imageUrl = null;
+        blockData.imageCaption = "";
+        updateBlockContent(blockData.id, { imageUrl: null, imageCaption: "" });
+        if (window.saveDocument) window.saveDocument();
+        // Recréer le placeholder
+        this.setupImageUpload(blockEl, blockData);
+      },
+      async (file, blockId) => {
+        const result = await imageUploadService.upload(file, blockId);
+        blockData.imageUrl = result;
+        updateBlockContent(blockData.id, { imageUrl: result });
+        if (window.saveDocument) window.saveDocument();
+        return result;
+      },
+      blockData.id
+    );
+    placeholder.parentNode.replaceChild(imageWrapper, placeholder);
+  } else {
+    const uploadUI = uploadComp.createUploadUI(async (file, blockId) => {
+      return await imageUploadService.upload(file, blockId);
+    }, blockData.id);
+    placeholder.parentNode.replaceChild(uploadUI, placeholder);
   }
-
-  setupImageUpload(blockEl, blockData) {
-    const placeholder = blockEl.querySelector('[data-action="upload-image"]');
-    if (!placeholder) return;
-
-    placeholder.addEventListener('click', () => {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-
-      input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const imageUrl = event.target.result;
-            blockData.imageUrl = imageUrl;
-            updateBlockContent(blockData.id, { imageUrl });
-
-            const isFloatRight = placeholder.classList.contains('float-right');
-            const floatClass = isFloatRight ? 'float-right' : 'float-left';
-            const marginStyle = isFloatRight ? 'margin: 0 0 10px 15px;' : 'margin: 0 15px 10px 0;';
-
-            const imageHtml = `
-              <div class="block-image-wrapper ${floatClass}" style="${floatClass === 'float-right' ? 'float: right;' : 'float: left;'} width: ${this.config.imageWidth}px; ${marginStyle}">
-                <img src="${imageUrl}" style="width: 100%; height: ${this.config.imageHeight}px; object-fit: cover; border-radius: 6px;">
-                <div class="block-image-caption" style="font-size: 11px; color: #666; text-align: center; margin-top: 5px;" data-field="imageCaption" contenteditable="true">${blockData.imageCaption || "Légende"}</div>
-              </div>
-            `;
-
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = imageHtml;
-            const newImageDiv = tempDiv.firstChild;
-            placeholder.parentNode.insertBefore(newImageDiv, placeholder);
-            placeholder.remove();
-
-            const caption = blockEl.querySelector('[data-field="imageCaption"]');
-            if (caption) {
-              caption.addEventListener('blur', () => {
-                blockData.imageCaption = caption.textContent;
-                updateBlockContent(blockData.id, { imageCaption: blockData.imageCaption });
-              });
-            }
-          };
-          reader.readAsDataURL(file);
-        }
-      };
-
-      input.click();
-    });
-  }
+}
 
   attachEvents(blockEl, blockData) {
     this.config.editableFields.forEach(field => {
@@ -353,46 +328,91 @@ createData(data = {}) {
     if (workspace) {
       setupBlockSelection(el, workspace);
     }
+    el.setupImageUpload = (el, data) => {
+      this.setupImageUpload(el, data);
+    };
 
     return el;
   }
 
-  // ✅ CORRIGÉE : utilise le workspace passé
-// baseBlock.js - méthode add
+
+
+  // baseBlock.js - méthode add complète
 
 add(workspace, data = {}) {
-  console.log("🔵 baseBlock.add - data reçu:", data);
-  console.log("🔵 baseBlock.add - questionNumber:", data.questionNumber);
-  
   let targetWorkspace = workspace;
   if (!targetWorkspace) {
-    targetWorkspace = document.querySelector('.page-content:last-child');
+      targetWorkspace = document.querySelector('.page-content:last-child');
   }
   if (!targetWorkspace && typeof window.getCurrentPageContent === 'function') {
-    targetWorkspace = window.getCurrentPageContent();
+      targetWorkspace = window.getCurrentPageContent();
   }
   
   if (!targetWorkspace) {
-    console.error("❌ Impossible de trouver le workspace pour ajouter le bloc");
-    return null;
+      console.error("❌ Impossible de trouver le workspace");
+      return null;
   }
   
   const blockData = this.createData(data);
-  console.log("🔵 baseBlock.add - blockData après createData:", blockData);
+  const blockHeight = blockData.size.height || this.config.defaultHeight;
+  const blockSpacing = this.config.blockSpacing || 10;
   
+  const currentPage = targetWorkspace.closest('.page-item');
+  const existingBlocks = targetWorkspace.querySelectorAll('.block');
+  
+  // Calculer la position Y du nouveau bloc
+  let newTop = this.config.defaultTop;
+  if (existingBlocks.length > 0) {
+      const lastBlock = existingBlocks[existingBlocks.length - 1];
+      newTop = lastBlock.offsetTop + lastBlock.offsetHeight + blockSpacing;
+  }
+  
+  // Vérifier l'espace disponible
+  const pageHeight = targetWorkspace.clientHeight;
+  const bottomPosition = newTop + blockHeight;
+  const marginBottom = 50;
+  const needNewPage = existingBlocks.length > 0 && bottomPosition > pageHeight - marginBottom;
+  
+  // ✅ Si besoin d'une nouvelle page
+  if (needNewPage) {
+      //console.log("📄 Pas assez d'espace, création d'une nouvelle page...");
+      
+      // Créer une nouvelle page et l'obtenir
+      let newPage = null;
+      if (typeof window.addPage === 'function') {
+          newPage = window.addPage();
+      }
+      
+      // Attendre que la page soit dans le DOM
+      if (newPage) {
+          const newWorkspace = newPage.querySelector('.page-content');
+          if (newWorkspace) {
+              //console.log("✅ Bloc redirigé vers la nouvelle page");
+              // Ajouter le bloc dans la nouvelle page (position par défaut)
+              return this.add(newWorkspace, data);
+          }
+      }
+  }
+  
+  // ✅ Ajout normal du bloc
   const blockEl = this.render(blockData, true, targetWorkspace);
-  
   targetWorkspace.appendChild(blockEl);
   addBlockToState(blockData);
   
-  const left = parseInt(blockEl.style.left);
-  const top = parseInt(blockEl.style.top);
-  if (!isNaN(left) && !isNaN(top)) {
-    blockData.position = { left, top };
-  }
+  // Appliquer la position
+  const finalLeft = parseInt(blockEl.style.left) || this.config.defaultLeft;
+  blockEl.style.top = `${newTop}px`;
+  blockEl.style.left = `${finalLeft}px`;
+  
+  blockData.position = { left: finalLeft, top: newTop };
+  
+  //console.log(`✅ Bloc ajouté à la position top: ${newTop}px`);
   
   return blockEl;
 }
+
+
+
 }
 
 export function createBlockType(type, config) {

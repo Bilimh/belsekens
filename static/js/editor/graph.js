@@ -1,4 +1,4 @@
-// addGraph.js
+// graph.js - Version corrigée (uniquement les 2 problèmes)
 
 import { createBlockType } from "./baseBlock.js";
 import { updateBlockContent } from "./editorState.js";
@@ -22,6 +22,45 @@ const defaultGraphContent = {
   gridStepY: 1
 };
 
+function cloneDeep(obj) {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function normalizeGraphContent(raw) {
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    return {
+      ...cloneDeep(defaultGraphContent),
+      ...raw,
+      datasets: Array.isArray(raw.datasets) && raw.datasets.length
+        ? raw.datasets.map(ds => ({
+            label: ds.label || "Série",
+            values: Array.isArray(ds.values) ? ds.values : []
+          }))
+        : cloneDeep(defaultGraphContent.datasets)
+    };
+  }
+
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      return normalizeGraphContent(parsed);
+    } catch {
+      return cloneDeep(defaultGraphContent);
+    }
+  }
+
+  return cloneDeep(defaultGraphContent);
+}
+
 const graphConfig = {
   defaultTitle: "Graphique",
   defaultContent: defaultGraphContent,
@@ -44,7 +83,6 @@ const graphConfig = {
     return `
       <div class="graph-block-container">
         <div class="graph-header">
-         
           <button class="btn-open-graph-modal" title="Configurer le graphique" type="button">
             <i class="fas fa-sliders-h"></i> Configurer
           </button>
@@ -54,6 +92,7 @@ const graphConfig = {
           <canvas class="graph-canvas"></canvas>
         </div>
 
+        <!-- ✅ Modal corrigé : plein écran avec blur -->
         <div class="graph-modal-overlay" style="display:none;">
           <div class="graph-modal">
             <div class="graph-modal-header">
@@ -160,6 +199,7 @@ const graphConfig = {
     `;
   },
 
+  // ✅ CSS corrigé : modal plein écran avec blur
   customCSS: `
     .graph-block-container {
       width: 100%;
@@ -176,16 +216,10 @@ const graphConfig = {
     .graph-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-end;
       gap: 12px;
       flex-wrap: wrap;
       flex-shrink: 0;
-    }
-
-    .graph-title-preview {
-      font-size: 16px;
-      font-weight: 600;
-      color: #333;
     }
 
     .btn-open-graph-modal {
@@ -226,28 +260,34 @@ const graphConfig = {
       display: block;
     }
 
+    /* ✅ MODAL PLEIN ÉCRAN AVEC BLUR */
     .graph-modal-overlay {
       position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.35);
-      z-index: 99999;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      z-index: 100000;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 18px;
+      padding: 20px;
       box-sizing: border-box;
     }
 
     .graph-modal {
-      width: min(1400px, 96vw);
-      max-width: 96vw;
-      height: min(88vh, 900px);
-      background: #fff;
-      border-radius: 18px;
-      overflow: hidden;
-      box-shadow: 0 18px 60px rgba(0,0,0,0.2);
+      width: 90%;
+      max-width: 1200px;
+      height: 85%;
+      max-height: 800px;
+      background: white;
+      border-radius: 20px;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
     }
 
     .graph-modal-header {
@@ -255,167 +295,141 @@ const graphConfig = {
       align-items: center;
       justify-content: space-between;
       padding: 16px 20px;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid #e2e8f0;
       flex-shrink: 0;
     }
 
     .graph-modal-header h3 {
       margin: 0;
       font-size: 18px;
-      color: #222;
+      color: #1e293b;
     }
 
     .btn-close-graph-modal {
       border: none;
       background: transparent;
       cursor: pointer;
-      font-size: 18px;
-      color: #666;
+      font-size: 20px;
+      color: #94a3b8;
+    }
+
+    .btn-close-graph-modal:hover {
+      color: #ef4444;
     }
 
     .graph-modal-body {
       padding: 20px;
-      display: grid;
-      gap: 16px;
-      overflow: auto;
+      overflow-y: auto;
       flex: 1;
     }
 
     .graph-form-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 14px;
+      gap: 16px;
+      margin-bottom: 16px;
     }
 
     .graph-form-group {
-      display: grid;
+      display: flex;
+      flex-direction: column;
       gap: 6px;
     }
 
     .graph-form-group label {
       font-size: 13px;
       font-weight: 600;
-      color: #333;
+      color: #475569;
     }
 
     .graph-form-group input,
     .graph-form-group select,
     .graph-form-group textarea {
       width: 100%;
-      border: 1px solid #d1d5db;
+      border: 1px solid #e2e8f0;
       border-radius: 10px;
       padding: 10px 12px;
       font-size: 14px;
       outline: none;
       box-sizing: border-box;
       font-family: inherit;
-      background: white;
-    }
-
-    .graph-form-group textarea {
-      resize: vertical;
-      min-height: 110px;
     }
 
     .graph-form-group input:focus,
     .graph-form-group select:focus,
     .graph-form-group textarea:focus {
       border-color: #fd7e14;
-      box-shadow: 0 0 0 2px rgba(253,126,20,0.15);
+      box-shadow: 0 0 0 2px rgba(253,126,20,0.1);
     }
 
     .graph-series-builder {
-      display: grid;
+      display: flex;
+      flex-direction: column;
       gap: 12px;
+      margin-top: 12px;
     }
 
     .graph-series-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .graph-series-header label {
-      font-size: 13px;
-      font-weight: 600;
-      color: #333;
     }
 
     .btn-add-series {
       border: none;
       cursor: pointer;
-      padding: 8px 12px;
+      padding: 6px 12px;
       border-radius: 8px;
-      font-size: 13px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: #198754;
+      font-size: 12px;
+      background: #10b981;
       color: white;
     }
 
-    .btn-add-series:hover {
-      background: #157347;
-    }
-
     .graph-series-list {
-      display: grid;
+      display: flex;
+      flex-direction: column;
       gap: 12px;
     }
 
     .graph-series-item {
-      border: 1px solid #e5e7eb;
+      border: 1px solid #e2e8f0;
       border-radius: 12px;
-      padding: 14px;
-      background: #fafafa;
-      display: grid;
-      gap: 10px;
+      padding: 12px;
+      background: #f8fafc;
     }
 
     .graph-series-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .graph-series-top strong {
-      font-size: 14px;
-      color: #333;
+      margin-bottom: 10px;
     }
 
     .btn-remove-series {
       border: none;
       cursor: pointer;
-      padding: 7px 10px;
-      border-radius: 8px;
-      font-size: 12px;
-      background: #dc3545;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      background: #ef4444;
       color: white;
-    }
-
-    .btn-remove-series:hover {
-      background: #bb2d3b;
     }
 
     .graph-help-text {
       font-size: 12px;
-      color: #666;
-      line-height: 1.5;
-      background: #fff7ed;
+      color: #64748b;
+      background: #fef3c7;
       border-radius: 10px;
-      padding: 10px 12px;
+      padding: 10px;
+      margin-top: 10px;
     }
 
     .graph-modal-footer {
       display: flex;
       justify-content: flex-end;
-      gap: 10px;
+      gap: 12px;
       padding: 16px 20px;
-      border-top: 1px solid #eee;
+      border-top: 1px solid #e2e8f0;
       flex-shrink: 0;
     }
 
@@ -423,19 +437,19 @@ const graphConfig = {
     .btn-save-graph {
       border: none;
       cursor: pointer;
-      padding: 10px 16px;
+      padding: 10px 20px;
       border-radius: 10px;
       font-size: 14px;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
     }
 
     .btn-cancel-graph {
-      background: #f3f4f6;
-      color: #333;
+      background: #f1f5f9;
+      color: #475569;
     }
 
     .btn-cancel-graph:hover {
-      background: #e5e7eb;
+      background: #e2e8f0;
     }
 
     .btn-save-graph {
@@ -449,6 +463,7 @@ const graphConfig = {
   `,
 
   customEvents: (blockEl, blockData) => {
+    blockEl._graphBlockData = blockData;
     const openBtn = blockEl.querySelector(".btn-open-graph-modal");
     const closeBtn = blockEl.querySelector(".btn-close-graph-modal");
     const cancelBtn = blockEl.querySelector(".btn-cancel-graph");
@@ -469,11 +484,9 @@ const graphConfig = {
 
     const sectionData = blockEl.querySelector(".section-data");
     const sectionFunction = blockEl.querySelector(".section-function");
-
     const seriesList = blockEl.querySelector(".graph-series-list");
     const addSeriesBtn = blockEl.querySelector(".btn-add-series");
 
-    //const titlePreview = blockEl.querySelector(".graph-title-preview");
     const canvas = blockEl.querySelector(".graph-canvas");
     const canvasWrapper = blockEl.querySelector(".graph-canvas-wrapper");
 
@@ -499,15 +512,11 @@ const graphConfig = {
     }
 
     function parseMultilineText(text) {
-      return text
-        .split("\n")
-        .map(item => item.trim())
-        .filter(item => item !== "");
+      return text.split("\n").map(item => item.trim()).filter(item => item !== "");
     }
 
     function parseMultilineNumbers(text) {
-      return text
-        .split("\n")
+      return text.split("\n")
         .map(item => item.trim())
         .filter(item => item !== "")
         .map(item => Number(item.replace(",", ".")))
@@ -524,12 +533,8 @@ const graphConfig = {
         { bg: "rgba(59,130,246,0.45)", border: "rgba(59,130,246,1)" },
         { bg: "rgba(16,185,129,0.45)", border: "rgba(16,185,129,1)" },
         { bg: "rgba(245,158,11,0.45)", border: "rgba(245,158,11,1)" },
-        { bg: "rgba(239,68,68,0.45)", border: "rgba(239,68,68,1)" },
-        { bg: "rgba(139,92,246,0.45)", border: "rgba(139,92,246,1)" },
-        { bg: "rgba(20,184,166,0.45)", border: "rgba(20,184,166,1)" },
-        { bg: "rgba(236,72,153,0.45)", border: "rgba(236,72,153,1)" }
+        { bg: "rgba(239,68,68,0.45)", border: "rgba(239,68,68,1)" }
       ];
-
       return Array.from({ length: count }, (_, i) => palette[i % palette.length]);
     }
 
@@ -537,7 +542,7 @@ const graphConfig = {
       const datasets = Array.isArray(tempContent.datasets) ? tempContent.datasets : [];
 
       if (!datasets.length) {
-        tempContent.datasets = [{ label: "Série 1", values: [10, 20, 30] }];
+        tempContent.datasets = [{ label: "Série 1", values: [] }];
       }
 
       seriesList.innerHTML = "";
@@ -552,12 +557,10 @@ const graphConfig = {
               <i class="fas fa-trash"></i> Supprimer
             </button>
           </div>
-
           <div class="graph-form-group">
             <label>Nom de la série</label>
             <input type="text" class="series-label-input" data-index="${index}" value="${escapeHtml(dataset.label || "")}">
           </div>
-
           <div class="graph-form-group">
             <label>Valeurs (une par ligne)</label>
             <textarea class="series-values-input" data-index="${index}" rows="5">${(dataset.values || []).join("\n")}</textarea>
@@ -573,8 +576,6 @@ const graphConfig = {
             tempContent.datasets[index].label = input.value;
           }
         });
-        input.addEventListener("mousedown", (e) => e.stopPropagation());
-        input.addEventListener("click", (e) => e.stopPropagation());
       });
 
       seriesList.querySelectorAll(".series-values-input").forEach(textarea => {
@@ -584,8 +585,6 @@ const graphConfig = {
             tempContent.datasets[index].values = parseMultilineNumbers(textarea.value);
           }
         });
-        textarea.addEventListener("mousedown", (e) => e.stopPropagation());
-        textarea.addEventListener("click", (e) => e.stopPropagation());
       });
 
       seriesList.querySelectorAll(".btn-remove-series").forEach(btn => {
@@ -600,24 +599,26 @@ const graphConfig = {
       });
     }
 
-    function syncTempContentFromForm() {
-      tempContent.mode = modeInput.value || "data";
-      tempContent.chartType = typeInput.value || "line";
-      tempContent.chartTitle = titleInput.value.trim() || "Mon graphique";
-      tempContent.gridStepX = safeNumber(gridXInput.value, 1);
-      tempContent.gridStepY = safeNumber(gridYInput.value, 1);
+   // syncTempContentFromForm - doit être présente dans ton code
+function syncTempContentFromForm() {
+  tempContent.mode = modeInput.value;
+  tempContent.chartType = typeInput.value;
+  tempContent.chartTitle = titleInput.value.trim() || "Mon graphique";
+  tempContent.gridStepX = safeNumber(gridXInput.value, 1);
+  tempContent.gridStepY = safeNumber(gridYInput.value, 1);
 
-      if (tempContent.mode === "data") {
-        tempContent.labels = parseMultilineText(labelsInput.value);
-      }
+  if (tempContent.mode === "data") {
+    tempContent.labels = parseMultilineText(labelsInput.value);
+    // Les datasets sont déjà mis à jour via renderSeriesBuilder
+  }
 
-      if (tempContent.mode === "function") {
-        tempContent.functionExpr = functionInput.value.trim() || "sin(x)";
-        tempContent.xMin = safeNumber(xMinInput.value, -10);
-        tempContent.xMax = safeNumber(xMaxInput.value, 10);
-        tempContent.step = safeNumber(stepInput.value, 0.1);
-      }
-    }
+  if (tempContent.mode === "function") {
+    tempContent.functionExpr = functionInput.value.trim() || "sin(x)";
+    tempContent.xMin = safeNumber(xMinInput.value, -10);
+    tempContent.xMax = safeNumber(xMaxInput.value, 10);
+    tempContent.step = safeNumber(stepInput.value, 0.1);
+  }
+}
 
     function fillFormFromTempContent() {
       modeInput.value = tempContent.mode;
@@ -639,26 +640,25 @@ const graphConfig = {
       tempContent = normalizeGraphContent(blockData.content);
       fillFormFromTempContent();
       overlay.style.display = "flex";
+      document.body.style.overflow = "hidden";
     }
 
     function closeModal() {
       overlay.style.display = "none";
+      document.body.style.overflow = "";
     }
 
     function buildFunctionPoints(expr, xMin, xMax, step) {
-      if (typeof math === "undefined") {
-        throw new Error("math.js n'est pas chargé");
-      }
-
       const points = [];
       for (let x = xMin; x <= xMax + step / 2; x += step) {
         try {
-          const y = math.evaluate(expr, { x });
-          if (Number.isFinite(y)) {
+          // ✅ Utiliser math.evaluate
+          const y = math.evaluate(expr, { x: x });
+          if (Number.isFinite(y) && !isNaN(y)) {
             points.push({ x: Number(x.toFixed(10)), y });
           }
-        } catch {
-          // ignorer
+        } catch (e) {
+          console.warn(`Erreur évaluation ${expr} à x=${x}:`, e.message);
         }
       }
       return points;
@@ -667,8 +667,7 @@ const graphConfig = {
     function ensureCanvasHeight() {
       const blockHeight = blockEl.clientHeight || 460;
       const headerHeight = blockEl.querySelector(".graph-header")?.offsetHeight || 50;
-      const paddingCompensation = 40;
-      const calculated = Math.max(260, blockHeight - headerHeight - paddingCompensation);
+      const calculated = Math.max(260, blockHeight - headerHeight - 40);
       canvasWrapper.style.height = `${calculated}px`;
     }
 
@@ -676,16 +675,11 @@ const graphConfig = {
       ensureCanvasHeight();
 
       if (typeof Chart === "undefined") {
-        canvasWrapper.innerHTML = `
-          <div style="padding:20px; color:#b91c1c; background:#fef2f2; border-radius:10px;">
-            Chart.js n'est pas chargé.
-          </div>
-        `;
+        canvasWrapper.innerHTML = `<div style="padding:20px; color:#b91c1c;">Chart.js non chargé</div>`;
         return;
       }
 
       const content = normalizeGraphContent(blockData.content);
-      //titlePreview.textContent = content.chartTitle || "Mon graphique";
 
       if (chartInstance) {
         chartInstance.destroy();
@@ -698,60 +692,37 @@ const graphConfig = {
         try {
           points = buildFunctionPoints(content.functionExpr, content.xMin, content.xMax, content.step);
         } catch (err) {
-          canvasWrapper.innerHTML = `
-            <div style="padding:20px; color:#b91c1c; background:#fef2f2; border-radius:10px;">
-              ${escapeHtml(err.message || "Erreur")}
-            </div>
-          `;
+          canvasWrapper.innerHTML = `<div style="padding:20px; color:#b91c1c;">${err.message}</div>`;
           return;
         }
 
         chartInstance = new Chart(ctx, {
           type: "line",
           data: {
-            datasets: [
-              {
-                label: content.functionExpr || "f(x)",
-                data: points,
-                parsing: false,
-                borderColor: "rgba(59,130,246,1)",
-                backgroundColor: "rgba(59,130,246,0.15)",
-                borderWidth: 2,
-                pointRadius: 0,
-                tension: 0.15,
-                fill: false
-              }
-            ]
+            datasets: [{
+              label: content.functionExpr,
+              data: points,
+              parsing: false,
+              borderColor: "rgba(59,130,246,1)",
+              backgroundColor: "rgba(59,130,246,0.15)",
+              borderWidth: 2,
+              pointRadius: 0,
+              tension: 0.15
+            }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
               legend: { display: true },
-              title: {
-                display: !!content.chartTitle,
-                text: content.chartTitle,
-                font: { size: 16 }
-              }
+              title: { display: !!content.chartTitle, text: content.chartTitle }
             },
             scales: {
-              x: {
-                type: "linear",
-                min: content.xMin,
-                max: content.xMax,
-                ticks: {
-                  stepSize: content.gridStepX
-                }
-              },
-              y: {
-                ticks: {
-                  stepSize: content.gridStepY
-                }
-              }
+              x: { type: "linear", min: content.xMin, max: content.xMax },
+              y: { ticks: { stepSize: content.gridStepY } }
             }
           }
         });
-
         return;
       }
 
@@ -764,54 +735,53 @@ const graphConfig = {
         backgroundColor: colors[i].bg,
         borderColor: colors[i].border,
         borderWidth: 2,
-        fill: content.chartType === "line" ? false : true,
         tension: 0.25,
         pointRadius: content.chartType === "line" ? 3 : 0
       }));
 
       chartInstance = new Chart(ctx, {
         type: content.chartType,
-        data: {
-          labels,
-          datasets
-        },
+        data: { labels, datasets },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
             legend: { display: true },
-            title: {
-              display: !!content.chartTitle,
-              text: content.chartTitle,
-              font: { size: 16 }
-            }
-          },
-          scales: ["pie", "doughnut", "polarArea", "radar"].includes(content.chartType)
-            ? {}
-            : {
-                y: {
-                  beginAtZero: true,
-                  ticks: {
-                    stepSize: content.gridStepY
-                  }
-                }
-              }
+            title: { display: !!content.chartTitle, text: content.chartTitle }
+          }
         }
       });
     }
 
+    // ✅ CORRECTION : Sauvegarde correcte des modifications
     function saveGraphConfig() {
+      console.log("🔵 saveGraphConfig - début");
+      
+      // 1. Synchroniser tempContent avec le formulaire
       syncTempContentFromForm();
-
+      console.log("🔵 tempContent après sync:", tempContent);
+      
+      // 2. Mettre à jour blockData.content
       blockData.content = cloneDeep(tempContent);
+      console.log("🔵 blockData.content mis à jour:", blockData.content);
+      
+      // 3. Mettre à jour l'état global
       updateBlockContent(blockData.id, { content: cloneDeep(tempContent) });
-
-      if (window.triggerAutoSave) {
-        window.triggerAutoSave();
-      }
-
+      console.log("🔵 updateBlockContent appelé pour:", blockData.id);
+      
+      // 4. Re-rendre le graphique
       renderChart();
+      
+      // 5. Fermer le modal
       closeModal();
+      
+      // 6. Déclencher l'auto-save
+      if (window.triggerAutoSave) {
+        console.log("🔵 Déclenchement auto-save");
+        setTimeout(() => window.triggerAutoSave(), 100);
+      }
+      
+      console.log("🔵 saveGraphConfig - fin");
     }
 
     modeInput?.addEventListener("change", () => {
@@ -820,26 +790,14 @@ const graphConfig = {
     });
 
     [titleInput, labelsInput, functionInput, xMinInput, xMaxInput, stepInput, gridXInput, gridYInput].forEach((el) => {
-      el?.addEventListener("input", () => {
-        syncTempContentFromForm();
-      });
-      el?.addEventListener("mousedown", (e) => e.stopPropagation());
-      el?.addEventListener("click", (e) => e.stopPropagation());
-      el?.addEventListener("dblclick", (e) => e.stopPropagation());
+      el?.addEventListener("input", () => syncTempContentFromForm());
     });
 
-    typeInput?.addEventListener("change", () => {
-      syncTempContentFromForm();
-    });
-    typeInput?.addEventListener("mousedown", (e) => e.stopPropagation());
-    typeInput?.addEventListener("click", (e) => e.stopPropagation());
+    typeInput?.addEventListener("change", () => syncTempContentFromForm());
 
     addSeriesBtn?.addEventListener("click", (e) => {
       e.stopPropagation();
-      tempContent.datasets.push({
-        label: `Série ${tempContent.datasets.length + 1}`,
-        values: []
-      });
+      tempContent.datasets.push({ label: `Série ${tempContent.datasets.length + 1}`, values: [] });
       renderSeriesBuilder();
     });
 
@@ -863,8 +821,8 @@ const graphConfig = {
       saveGraphConfig();
     });
 
-    overlay?.addEventListener("click", () => {
-      closeModal();
+    overlay?.addEventListener("click", (e) => {
+      if (e.target === overlay) closeModal();
     });
 
     stopModalPropagation();
@@ -873,67 +831,18 @@ const graphConfig = {
     if (window.ResizeObserver) {
       resizeObserver = new ResizeObserver(() => {
         ensureCanvasHeight();
-        if (chartInstance) {
-          chartInstance.resize();
-        }
+        chartInstance?.resize();
       });
       resizeObserver.observe(blockEl);
-    } else {
-      window.addEventListener("resize", () => {
-        ensureCanvasHeight();
-        if (chartInstance) {
-          chartInstance.resize();
-        }
-      });
     }
 
     if (!blockData.content) {
+      blockData.content = cloneDeep(defaultGraphContent);
       updateBlockContent(blockData.id, { content: cloneDeep(defaultGraphContent) });
-      if (window.triggerAutoSave) {
-        window.triggerAutoSave();
-      }
     }
+    renderChart();
   }
 };
-
-function normalizeGraphContent(raw) {
-  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
-    return {
-      ...cloneDeep(defaultGraphContent),
-      ...raw,
-      datasets: Array.isArray(raw.datasets) && raw.datasets.length
-        ? raw.datasets.map(ds => ({
-            label: ds.label || "Série",
-            values: Array.isArray(ds.values) ? ds.values : []
-          }))
-        : cloneDeep(defaultGraphContent.datasets)
-    };
-  }
-
-  if (typeof raw === "string") {
-    try {
-      const parsed = JSON.parse(raw);
-      return normalizeGraphContent(parsed);
-    } catch {
-      return cloneDeep(defaultGraphContent);
-    }
-  }
-
-  return cloneDeep(defaultGraphContent);
-}
-
-function cloneDeep(obj) {
-  return JSON.parse(JSON.stringify(obj));
-}
-
-function escapeHtml(str) {
-  return String(str)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
 
 const graphBlock = createBlockType("graph", graphConfig);
 
@@ -941,3 +850,15 @@ export const createGraphData = graphBlock.createData;
 export const renderGraph = graphBlock.render;
 export const attachGraphEvents = graphBlock.attachEvents;
 export const addGraph = graphBlock.add;
+
+// ✅ Sérialisation
+
+// graph.js - à la fin du fichier
+export function serializeGraph(blockEl) {
+  // Récupérer les données depuis l'attribut ou depuis blockData
+  const blockData = blockEl._graphBlockData;
+  if (blockData && blockData.content) {
+    return blockData.content;
+  }
+  return defaultGraphContent;
+}
