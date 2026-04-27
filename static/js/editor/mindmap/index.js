@@ -228,8 +228,6 @@ export function serializeMindmap(blockEl) {
     
     if (nodesContainer) {
       nodesContainer.querySelectorAll(".mindmap-node").forEach(nodeEl => {
-        // ✅ Lire depuis le preview (qui contient le LaTeX rendu)
-        // Ou depuis le source (qui contient le code brut)
         const previewEl = nodeEl.querySelector(".mindmap-node-preview");
         const sourceEl = nodeEl.querySelector(".mindmap-node-source");
         
@@ -254,7 +252,7 @@ export function serializeMindmap(blockEl) {
     console.log("🔵 serializeMindmap - nodesData:", nodesData);
     
     return {
-        title: titleEl ? (titleEl.innerText || titleEl.textContent || "Carte mentale") : "Carte mentale",
+      title: titleEl ? titleEl.innerText : "Carte mentale",
       content: { nodes: nodesData }
     };
   }
