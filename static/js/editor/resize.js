@@ -43,7 +43,7 @@ export function makeResizable(blockEl) {
       // ✅ Utiliser scrollHeight pour la hauteur réelle
       const maxHeight = workspace.scrollHeight - paddingTop - paddingBottom - 20;
       const minWidth = 200;
-      const minHeight = 100;
+      const minHeight = 40;
 
       const handleType = handle.classList[1];
 

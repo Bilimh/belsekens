@@ -10,6 +10,7 @@
     border: 2px solid transparent;
     /*border-radius: 20px;*/
     /*box-shadow: 0 4px 12px rgba(0,0,0,0.05);*/
+    box-shadow:none;
     transition: all 0.2s ease;
     cursor: pointer;
     backdrop-filter: blur(0px);
@@ -101,6 +102,7 @@
     background: #8b5cf6;
     color: white;
     cursor: grab;
+    z-index: 1000;
   }
   
   .drag-handle:hover {
@@ -182,7 +184,7 @@
   
   [contenteditable="true"] {
     outline: none;
-    background: #fefce8;
+    background: transparent;
     padding: 4px 8px;
     border-radius: 8px;
   }
@@ -352,7 +354,7 @@
 
 /* Styles pour les questions */
 
-.question-container {
+/*.question-container {
   width: 100%;
   background: #f8fafc;
   border-radius: 12px;
@@ -387,9 +389,9 @@
   margin-top: -3px;
   margin-left: -5px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
+}*/
 
-.question-text {
+/*.question-text {
   flex: 1;
   font-size: 16px;
   line-height: 1.5;
@@ -427,7 +429,7 @@
 .question-block.selected .question-container {
   border: 2px solid #3b82f6;
   box-shadow: 0 4px 12px rgba(59,130,246,0.2);
-}
+}*/
 
 @media print {
 

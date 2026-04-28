@@ -264,7 +264,7 @@ body {
     padding: 8px 24px;
     z-index: 140;
     transition: left 0.3s ease;
-    height: 55px;
+    height: auto;
 }
 
 .sidebar-left.collapsed ~ .editor-header {
@@ -716,6 +716,70 @@ body {
         padding: 0;
     }
 }
+/* Sidebar gauche avec scroll */
+.sidebar-left {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 280px;
+    height: 100vh;
+    background: white;
+    border-right: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    z-index: 150;
+    transition: transform 0.3s ease;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.05);
+    overflow: hidden; /* Empêche le scroll sur le conteneur principal */
+}
+
+/* Zone scrollable */
+.sidebar-scrollable {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 0 16px 0;
+}
+
+/* Style du scrollbar */
+.sidebar-scrollable::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar-scrollable::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.sidebar-scrollable::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.sidebar-scrollable::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Firefox */
+.sidebar-scrollable {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* Logo fixe en haut */
+.sidebar-logo {
+    padding: 20px;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+/* Utilisateur fixe en bas */
+.sidebar-user {
+    padding: 16px;
+    border-top: 1px solid #e2e8f0;
+    flex-shrink: 0;
+    background: white;
+}
 </style>
 {% endblock %}
 
@@ -750,18 +814,18 @@ body {
         </div>
     </div>
 
-    <div class="sidebar-divider"></div>
-    <!-- SECTION RECHERCHE -->
+    <!--<div class="sidebar-divider"></div>
+
 <div class="sidebar-search">
     <div class="search-input-wrapper">
         <i class="fas fa-search"></i>
         <input type="text" id="global-search" placeholder="Rechercher dans le document..." class="search-input">
     </div>
     <div id="search-results" class="search-results" style="display: none;"></div>
-</div>
+</div>-->
 
 <!-- SECTION OUTILS -->
-
+<div class="sidebar-scrollable">
 <div class="sidebar-section">
     <div class="section-title">
         <i class="fas fa-tools"></i> Outils
@@ -822,7 +886,7 @@ body {
             <span class="stat-value" id="stat-blocs-sidebar">0</span>
         </div>
     </div>
-
+</div>
     <!-- UTILISATEUR -->
     <div class="sidebar-user">
         <div class="user-dropdown" id="user-dropdown">
@@ -899,33 +963,6 @@ body {
 <div id="toast-notification" class="toast-notification">Sauvegardé</div>
 
 <script>
-    // Recherche
-const searchInput = document.getElementById('global-search');
-searchInput.addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase();
-    const results = document.getElementById('search-results');
-    
-    if (query.length < 2) {
-        results.style.display = 'none';
-        return;
-    }
-    
-    // Rechercher dans les blocs
-    const blocks = document.querySelectorAll('.block');
-    const matches = [];
-    blocks.forEach(block => {
-        const text = block.textContent.toLowerCase();
-        if (text.includes(query)) {
-            matches.push(block);
-        }
-    });
-    
-    // Afficher résultats
-    results.style.display = 'block';
-    results.innerHTML = matches.length ? 
-        matches.map(m => `<div class="search-result-item">${m.textContent.substring(0, 100)}...</div>`).join('') :
-        '<div class="search-result-empty">Aucun résultat</div>';
-});
 
 // Templates
 document.querySelectorAll('.template-item[data-template]').forEach(btn => {
@@ -1062,40 +1099,45 @@ document.getElementById('ai-generate-template')?.addEventListener('click', () =>
         pageDiv.addEventListener('click', (e) => {
             // Évite que le clic sur le bouton supprimer active la page
             if (e.target.closest('.btn-delete-page')) return;
-            setActivePage(pageNumber);
+            setActivePage(pageNumber, false);
         });
 
         return pageDiv;
     }
 
     // ✅ Définir la page active manuellement
-    function setActivePage(pageNumber) {
-        const pages = document.querySelectorAll('#pages-container .page-item');
+function setActivePage(pageNumber, shouldScroll = false) {
+    const pages = document.querySelectorAll('#pages-container .page-item');
 
-        // ✅ Enlève la classe active de toutes les pages
-        pages.forEach(page => {
-            page.classList.remove('active-page');
-        });
+    // Enlève la classe active de toutes les pages
+    pages.forEach(page => {
+        page.classList.remove('active-page');
+    });
 
-        for (let page of pages) {
-            const pageNum = parseInt(page.dataset.pageNumber);
-            if (pageNum === pageNumber) {
-                const content = page.querySelector('.page-content');
-                if (content) {
-                    currentActivePage = content;
+    for (let page of pages) {
+        const pageNum = parseInt(page.dataset.pageNumber);
+        if (pageNum === pageNumber) {
+            const content = page.querySelector('.page-content');
+            if (content) {
+                currentActivePage = content;
 
-                    // ✅ Ajoute la classe active à la page
-                    page.classList.add('active-page');
+                // Ajoute la classe active à la page
+                page.classList.add('active-page');
 
-                    updatePageTabs();
+                updatePageTabs();
+                
+                // ✅ Scroll uniquement si demandé
+                if (shouldScroll) {
                     page.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    console.log(`📌 Page ${pageNumber} définie comme active`);
-                    return true;
                 }
+                
+                console.log(`📌 Page ${pageNumber} définie comme active`);
+                return true;
             }
         }
-        return false;
     }
+    return false;
+}
 
     // ✅ Mettre à jour l'affichage des onglets
     // ✅ Mettre à jour l'affichage des onglets (TOUS VISIBLES)
@@ -1121,7 +1163,7 @@ document.getElementById('ai-generate-template')?.addEventListener('click', () =>
             tab.className = `page-tab ${isActive ? 'active' : ''}`;
             tab.textContent = pageNumber;
             tab.setAttribute('data-tooltip', `Page ${pageNumber}`);
-            tab.onclick = () => setActivePage(pageNumber);
+            tab.onclick = () => setActivePage(pageNumber, true);
             tabsContainer.appendChild(tab);
         });
 
@@ -1303,57 +1345,55 @@ document.getElementById('ai-generate-template')?.addEventListener('click', () =>
         return pagesData;
     }
 
-    // Initialiser avec une première page
-    function init() {
-        const container = document.getElementById('pages-container');
-        if (!container) {
-            console.error('❌ pages-container non trouvé');
-            return;
-        }
-
-        container.innerHTML = '';
-
-        // Créer la barre d'onglets
-        const tabsContainer = document.createElement('div');
-        tabsContainer.className = 'pages-tabs';
-        tabsContainer.innerHTML = '<div class="pages-tabs-scroll" id="pages-tabs-scroll"></div>';
-
-        // Insérer la barre d'onglets avant le container des pages
-        const workspaceWrapper = document.querySelector('.workspace-wrapper');
-        if (workspaceWrapper) {
-            workspaceWrapper.insertBefore(tabsContainer, container);
-        }
-
-        // Première page par défaut
-        const firstPage = createPageElement(1);
-        container.appendChild(firstPage);
-        pageCounter = 2;
-
-        // Ajouter le bouton "Ajouter une page"
-        const addBtnContainer = document.createElement('div');
-        addBtnContainer.className = 'add-page-container';
-        addBtnContainer.innerHTML = `
-                <button class="btn-add-page" id="add-new-page-btn">
-                    <i class="fas fa-plus"></i> Ajouter une page
-                </button>
-            `;
-        container.appendChild(addBtnContainer);
-
-        // Écouter le bouton
-        const addBtn = document.getElementById('add-new-page-btn');
-        if (addBtn) {
-            addBtn.addEventListener('click', addPage);
-        }
-
-        // Écouter les suppressions
-        attachDeleteEvents();
-
-        // ✅ Initialiser la page active
-        currentActivePage = firstPage.querySelector('.page-content');
-        updatePageTabs();
-
-        console.log('✅ Pages initialisées');
+   // Initialiser avec une première page
+function init() {
+    const container = document.getElementById('pages-container');
+    if (!container) {
+        console.error('❌ pages-container non trouvé');
+        return;
     }
+
+    container.innerHTML = '';
+
+    // Créer la barre d'onglets
+    const tabsContainer = document.createElement('div');
+    tabsContainer.className = 'pages-tabs';
+    tabsContainer.innerHTML = '<div class="pages-tabs-scroll" id="pages-tabs-scroll"></div>';
+
+    // Insérer la barre d'onglets avant le container des pages
+    const workspaceWrapper = document.querySelector('.workspace-wrapper');
+    if (workspaceWrapper) {
+        workspaceWrapper.insertBefore(tabsContainer, container);
+    }
+
+    // Première page par défaut
+    const firstPage = createPageElement(1);
+    container.appendChild(firstPage);
+    pageCounter = 2;
+
+    // Ajouter le bouton "Ajouter une page"
+    const addBtnContainer = document.createElement('div');
+    addBtnContainer.className = 'add-page-container';
+    addBtnContainer.innerHTML = `
+        <button class="btn-add-page" id="add-new-page-btn">
+            <i class="fas fa-plus"></i> Ajouter une page
+        </button>
+    `;
+    container.appendChild(addBtnContainer);
+
+    // Écouter le bouton
+    const addBtn = document.getElementById('add-new-page-btn');
+    if (addBtn) {
+        addBtn.addEventListener('click', addPage);
+    }
+
+    // Écouter les suppressions
+    attachDeleteEvents();
+
+    // ✅ Initialiser la page active (sans scroll)
+    updatePageTabs();
+    setActivePage(1, false);
+}
 
 
 

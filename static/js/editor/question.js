@@ -8,7 +8,7 @@ const questionConfig = {
   defaultContent: "Votre question ici...",
   
   defaultWidth: 600,
-  defaultHeight: 80,
+  defaultHeight: 32,
   defaultLeft: 40,
   defaultTop: 40,
   
@@ -36,17 +36,17 @@ const questionConfig = {
   customCSS: `
     .question-number {
       flex-shrink: 0;
-      width: 32px;
-      height: 32px;
+      width: 25px;
+      height: 25px;
       background: #3b82f6;
       color: white;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: bold;
-      font-size: 16px;
-      margin-top: -3px;
+     
+      font-size: 15px;
+      margin-top: 3px;
       margin-left: -10px;
     }
     
@@ -61,12 +61,13 @@ const questionConfig = {
     .question-header {
       display: flex;
       align-items: flex-start;
-      gap: 12px;
+      gap: 1px;
     }
     
-    .question-block {
-      margin-bottom: 20px;
-    }
+  .question-block {
+    background: transparent;
+    padding: 0 !important;
+  }
   `
 };
 
